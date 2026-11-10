@@ -1,0 +1,33 @@
+@startuml plant-watering
+' Proposed architecture for a plant-watering controller.
+' Dashed links (..>) are proposals awaiting review. Every element carries a stable id.
+
+' id: moisture-sensor
+' req: R1
+component "MoistureSensor" as MoistureSensor
+
+' id: watering-controller
+' req: R1, R2
+component "WateringController" as WateringController
+
+' id: pump-driver
+' req: R2
+component "PumpDriver" as PumpDriver
+
+' id: scheduler
+' req: R3
+component "Scheduler" as Scheduler
+
+' id: moisture-reading
+interface "MoistureReading" as MoistureReading
+
+MoistureSensor ..> MoistureReading : publishes
+WateringController ..> MoistureReading : reads
+WateringController ..> PumpDriver : commands
+Scheduler ..> WateringController : triggers
+
+note right of WateringController
+  Decides when to water from
+  moisture level and schedule.
+end note
+@enduml

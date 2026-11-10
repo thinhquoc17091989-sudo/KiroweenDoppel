@@ -1,0 +1,22 @@
+{
+  "name": "doppel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Draw the architecture, Kiro writes the code and keeps it honest.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "fast-check": "^4.10.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
+  }
+}

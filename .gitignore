@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+# never ignore .kiro: the hackathon requires it in the repo
