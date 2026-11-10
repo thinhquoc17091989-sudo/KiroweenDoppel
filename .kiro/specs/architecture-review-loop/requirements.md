@@ -17,8 +17,10 @@ and gets code, tests and a trace table per element.
 3. WHEN the reviewer rejects a proposal, THEN the system SHALL remove it and SHALL NOT generate code for it.
 
 ### R3 Save as text
+The PlantUML subset supports `component`, `interface`, `note`, `-->` and `..>` links, and `' id:`, `' req:` and `' status:` comments.
 1. WHEN the reviewer approves the architecture, THEN the system SHALL write approved elements to `architecture/*.puml`.
-2. WHEN `architecture/*.puml` is parsed and printed again, THEN the output SHALL equal the input after normalizing whitespace. (property-based test)
+2. WHEN a model is printed and parsed again, THEN the parsed model SHALL equal the original model. (property-based test)
+3. WHEN printed text is parsed and printed again, THEN the output SHALL equal the first printed text. (property-based test)
 
 ### R4 Generate per element
 1. WHEN an element becomes approved, THEN a hook SHALL generate one code file and one test file for it.

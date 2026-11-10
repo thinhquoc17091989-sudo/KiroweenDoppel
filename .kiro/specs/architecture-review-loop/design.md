@@ -4,7 +4,7 @@
 `proposals.puml` -> review UI -> `architecture/*.puml` (approved) -> hook -> `src/<element>.ts` + `test/<element>.test.ts` -> `trace.json` -> trace table + drift MCP.
 
 ## Components
-- **puml-subset**: parser and printer for the restricted subset. Pure functions, property-tested for round trip.
+- **puml-subset**: parser and printer for the restricted subset in `src/core/puml.ts`, with the element types in `src/core/model.ts`. Pure functions, property-tested for round trip in `test/puml.test.ts`.
 - **review-ui**: Vite page. Left: diagram. Right: proposal list with accept, rename, reject. Bottom: trace table.
 - **trace**: reads and writes `trace.json`; computes in sync or stale by comparing the element hash stored at generation time.
 - **drift-mcp**: small MCP server exposing `check_drift` and `list_trace`.
