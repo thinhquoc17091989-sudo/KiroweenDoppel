@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doppel</title>
+  <link rel="stylesheet" href="/src/ui/style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand"><b>Doppel</b><span>you draw the architecture, Kiro writes the code and keeps it honest</span></div>
+    <div class="spacer"></div>
+    <button id="btnArrange" class="ghost" title="Re-place every element automatically">Arrange</button>
+    <button id="btnReset" class="ghost" title="Reload the sample proposals">Reset sample</button>
+    <button id="btnApprove" class="primary" title="Write the approved elements as architecture/*.puml">Approve architecture</button>
+  </header>
+  <main>
+    <section id="canvasWrap">
+      <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="legend">
+        <span><i class="sw dashed"></i>proposed</span>
+        <span><i class="sw solid"></i>approved</span>
+        <span><i class="sw iface"></i>interface</span>
+        <span class="hint">drag to place · double-click to rename</span>
+      </div>
+    </section>
+    <aside>
+      <h2>Proposals <em id="countProposed"></em></h2>
+      <ul id="listProposed" class="elements"></ul>
+      <h2>Approved <em id="countApproved"></em></h2>
+      <ul id="listApproved" class="elements"></ul>
+      <h2>PlantUML <small>live</small></h2>
+      <pre id="puml"></pre>
+    </aside>
+  </main>
+  <div id="toast"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
