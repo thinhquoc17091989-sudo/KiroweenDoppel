@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Drift check on every prompt",
+      "description": "File hooks only see agent-made saves. Approvals made in the Doppel UI are picked up here: before each prompt, run the drift checker so the agent knows which elements have no code, no test, or stale code.",
+      "enabled": true,
+      "trigger": "PromptSubmit",
+      "action": {
+        "type": "command",
+        "command": "node mcp/check-drift.mjs --brief",
+        "timeout": 20
+      }
+    }
+  ]
+}

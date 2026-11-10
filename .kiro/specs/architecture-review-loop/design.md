@@ -8,7 +8,7 @@
 - **review-ui**: Vite page. Left: diagram. Right: proposal list with accept, rename, reject. Bottom: trace table.
 - **trace**: reads and writes `trace.json`; computes in sync or stale by comparing the element hash stored at generation time.
 - **drift-mcp**: small MCP server exposing `check_drift` and `list_trace`.
-- **hook** (`.kiro/hooks/on-architecture-change`): on save of `architecture/*.puml`, asks the agent to generate or update code, tests and trace for changed elements only.
+- **hook** (`.kiro/hooks/on-architecture-change.json`, trigger `PostFileSave`, regex matcher on `architecture/*.puml`): on save of `architecture/*.puml`, asks the agent to generate or update code, tests and trace for changed elements only.
 
 ## Key decisions
 - Element identity is a stable id in a `' id:` comment, so rename keeps links (R2.2).
@@ -37,3 +37,9 @@ Architecture as steering context: the approved `architecture/*.puml` files are g
 
 ## Hosting the demo
 The UI is a static page on GitHub Pages. It opens the repository folder through the browser's File System Access API, so approving writes `architecture/*.puml` straight into the working copy and the Kiro hook fires. Chromium browsers only, which is stated on the page. No server, no credits, works offline.
+
+## Hook constraint (from the Kiro docs, 2026-11-10)
+File Create, File Save and File Delete hooks fire only on changes made by the agent. A file the Doppel UI writes through the File System Access API does not fire them. Therefore two hooks:
+- `on-architecture-change.json`, `PostFileSave` on `architecture/.*\.puml$`: fires when Kiro itself edits the architecture, for example when the reviewer asks Kiro to split or rename an element in chat.
+- `drift-on-prompt.json`, `PromptSubmit` command hook: runs the drift checker before every prompt, so an approval made in the UI is seen by the agent on the next message without the reviewer having to describe it. To verify in task 8: that a command hook's stdout is injected into the agent context on this Kiro version.
+Both hooks exist in `.kiro/hooks/` as JSON with `version: "v1"`, a `hooks` array, PascalCase `trigger`, regex `matcher`, and an `action` of type `agent` or `command`.
