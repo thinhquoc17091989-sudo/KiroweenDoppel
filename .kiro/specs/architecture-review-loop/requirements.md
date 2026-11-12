@@ -36,3 +36,7 @@ The PlantUML subset supports `component`, `interface`, `note`, `-->` and `..>` l
 
 ## Out of scope
 Real SysML, multi-user editing, any hosted backend.
+
+### R1 (addendum) Architecture file list
+4. WHEN the project has one or more files under `architecture/`, THEN the review UI SHALL list every one of them, grouped by dialect (static, dynamic), each tagged approved, editing or new.
+5. WHEN a proposal introduces a file that does not exist in `architecture/`, THEN the UI SHALL mark it new and SHALL NOT write it until the reviewer approves the change set.

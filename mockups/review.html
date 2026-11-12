@@ -18,20 +18,31 @@
   .ctx { font-size: 12px; color: var(--muted); }
   .ctx b { color: #ffb77a; font-weight: 600; }
   .spacer { flex: 1; }
-  .tabs { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; }
-  .tabs button { font: 600 12px var(--sans); padding: 7px 14px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; min-height: 32px; }
-  .tabs button.on { background: var(--accent); color: var(--accent-ink); }
-  .filerow { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; background: var(--panel); }
-  .filerow .label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-right: 4px; }
-  .chip { font: 600 12px var(--sans); padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: #cfd5e3; cursor: pointer; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
-  .chip.on { background: #2a2416; border-color: var(--accent); color: #ffcf9e; }
-  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
-  .chip.changed .dot { background: var(--warn); }
-  .chip[disabled] { opacity: .45; cursor: not-allowed; }
   button.ghost { font: 600 12px var(--sans); padding: 9px 12px; background: transparent; color: #cfd5e3; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; min-height: 36px; }
   button.primary { font: 600 12px var(--sans); padding: 9px 14px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; min-height: 36px; }
+
   main { display: flex; flex-wrap: wrap; min-height: calc(100vh - 56px); }
-  .canvasCol { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; }
+
+  /* file list sidebar: every architecture file in the project, status at a glance */
+  nav.filelist { flex: 0 0 240px; background: var(--panel); border-right: 1px solid var(--line); padding: 14px 0; display: flex; flex-direction: column; gap: 2px; overflow: auto; max-height: calc(100vh - 56px); }
+  nav.filelist h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 12px 16px 6px; }
+  nav.filelist h2:first-child { margin-top: 0; }
+  .fitem { display: flex; align-items: center; gap: 9px; padding: 9px 16px; cursor: pointer; border: 0; background: transparent; width: 100%; text-align: left; font: 500 12.5px var(--sans); color: #cfd5e3; min-height: 40px; border-left: 3px solid transparent; }
+  .fitem:hover { background: #22273344; }
+  .fitem.on { background: #2a2416; border-left-color: var(--accent); color: #ffe0c2; font-weight: 600; }
+  .fitem .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .fitem .dot.approved { background: var(--existing); }
+  .fitem .dot.editing { background: var(--accent); }
+  .fitem .dot.new { background: var(--proposed); }
+  .fitem .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fitem .tag { font-size: 10px; font-family: var(--mono); color: var(--muted); }
+  .fitem.on .tag { color: #ffcf9e; }
+  .faction { display: flex; align-items: center; gap: 9px; padding: 9px 16px; color: var(--muted); font-size: 12px; opacity: .6; cursor: not-allowed; }
+  .legend2 { margin: 14px 16px 0; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: var(--muted); }
+  .legend2 span { display: flex; align-items: center; gap: 8px; }
+  .legend2 .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .canvasCol { flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; }
   .statusbar { display: flex; gap: 18px; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); flex-wrap: wrap; }
   .statusbar b { color: #e6e9f0; }
   .canvasWrap { flex: 1; position: relative; background: var(--paper);
@@ -56,9 +67,12 @@
   .sw.modified { border-color: var(--modified); background: #fff8e8; }
   .sw.proposed { border-color: var(--proposed); border-style: dashed; background: #faf7ff; }
   .sw.iface { border-color: var(--iface); border-radius: 6px; }
-  .empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #8b8f82; font-size: 14px; }
-  aside { flex: 1 1 380px; max-width: 420px; background: var(--panel); border-left: 1px solid var(--line); padding: 14px 16px;
+  .empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #8b8f82; font-size: 14px; text-align: center; padding: 0 60px; }
+
+  aside { flex: 1 1 360px; max-width: 400px; background: var(--panel); border-left: 1px solid var(--line); padding: 14px 16px;
     display: flex; flex-direction: column; gap: 10px; overflow: auto; max-height: calc(100vh - 56px); }
+  .aview { display: none; flex-direction: column; gap: 10px; }
+  .aview.on { display: flex; }
   aside h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 6px 0 0; font-weight: 600; }
   .card { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
   .card.proposed { border-color: var(--proposed); }
@@ -72,12 +86,19 @@
   .actions button { font: 600 12px var(--sans); padding: 6px 10px; background: transparent; border-radius: 6px; cursor: pointer; min-height: 32px; border: 1px solid var(--line); color: #cfd5e3; }
   .actions button.accept { color: var(--ok); border-color: #2f6b4a; }
   .actions button.reject { color: var(--bad); border-color: #6b2f2f; }
-  .otherview { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .otherview b { color: #e6e9f0; }
+  .infobox { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 14px; font-size: 13px; line-height: 19px; color: #cfd5e3; }
+  .infobox b { color: #e6e9f0; }
+  .infobox.new { border-color: var(--proposed); }
   pre.diff { margin: 0; font: 11.5px/1.5 var(--mono); background: #12151c; border: 1px solid var(--line); border-radius: 8px;
     padding: 10px; white-space: pre; overflow: auto; color: #c8d0e0; }
   pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.diff .chg { color: var(--warn); }
-  @media (max-width: 900px) { main { flex-direction: column; } aside { max-width: none; border-left: 0; border-top: 1px solid var(--line); max-height: none; } }
+
+  @media (max-width: 1000px) {
+    main { flex-direction: column; }
+    nav.filelist { flex: none; max-height: none; flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--line); }
+    nav.filelist h2 { width: 100%; margin: 6px 16px 2px; }
+    aside { max-width: none; max-height: none; border-left: 0; border-top: 1px solid var(--line); }
+  }
 </style>
 </head>
 <body>
@@ -86,36 +107,39 @@
   <span class="pill">plant-watering</span>
   <span class="ctx">change for <b>R7 skip watering when rain is forecast</b></span>
   <span class="spacer"></span>
-  <div class="tabs" id="cattabs">
-    <button data-cat="static" class="on">Static · 3 changes</button>
-    <button data-cat="dynamic">Dynamic · 1 sequence</button>
-  </div>
   <button class="ghost">Ask Kiro again</button>
   <button class="primary">Approve change set</button>
 </header>
-<div class="filerow" id="filerow-static">
-  <span class="label">Static views</span>
-  <button class="chip" data-view="topology">topology.puml <span class="dot"></span></button>
-  <button class="chip on changed" data-view="static">block-watering.puml <span class="dot"></span></button>
-  <button class="chip" disabled title="future: a refined view, e.g. inside WateringController">+ refine a block…</button>
-</div>
-<div class="filerow" id="filerow-dynamic" style="display:none">
-  <span class="label">Dynamic views</span>
-  <button class="chip on changed" data-view="dynamic">skip-watering-on-rain.seq.puml <span class="dot"></span></button>
-  <button class="chip" disabled title="existing, unaffected by R7">water-on-schedule.seq.puml <span class="dot"></span></button>
-</div>
 <main>
+  <nav class="filelist" id="filelist">
+    <h2>Static</h2>
+    <button class="fitem" data-view="topology" data-aside="topology"><span class="dot approved"></span><span class="name">topology.puml</span><span class="tag">approved</span></button>
+    <button class="fitem on" data-view="static" data-aside="static"><span class="dot editing"></span><span class="name">block-watering.puml</span><span class="tag">editing</span></button>
+
+    <h2>Dynamic</h2>
+    <button class="fitem" data-view="dynamic" data-aside="dynamic"><span class="dot new"></span><span class="name">skip-watering-on-rain<wbr>.seq.puml</span><span class="tag">new</span></button>
+    <button class="fitem" data-view="dynamic-unaffected" data-aside="dynamic-unaffected"><span class="dot approved"></span><span class="name">water-on-schedule<wbr>.seq.puml</span><span class="tag">approved</span></button>
+
+    <div class="faction" title="future: start a blank file in either dialect">+ new architecture file…</div>
+
+    <div class="legend2">
+      <span><i class="dot approved"></i>approved — current baseline, no pending change</span>
+      <span><i class="dot editing"></i>editing — open now, has proposed or modified elements</span>
+      <span><i class="dot new"></i>new — proposed file, not yet in architecture/</span>
+    </div>
+  </nav>
+
   <div class="canvasCol">
     <div class="statusbar">
-      <span>Kiro read <b>3 architecture files</b>, <b>12 modules</b>, <b>trace.json</b></span>
+      <span>Kiro read <b>4 architecture files</b> in <b>architecture/</b>, <b>12 modules</b>, <b>trace.json</b></span>
       <span style="color:#4a5570">|</span>
-      <span><b style="color:#c7a9ff">2 added</b> · <b style="color:#ffcf7a">1 modified</b> · <b>0 removed</b> · 5 unchanged</span>
+      <span><b style="color:#c7a9ff">1 new file</b> · <b style="color:#ffcf7a">1 file edited</b> · <b>2 files unchanged</b></span>
       <span style="color:#4a5570">|</span>
-      <span>drag to place · double-click to rename · ids never change (mockup: static only)</span>
+      <span>pick a file on the left · drag to place · double-click to rename · ids never change (mockup: static only)</span>
     </div>
     <div class="canvasWrap">
 
-      <div class="view" id="view-topology"><div class="empty">topology.puml: no change proposed for R7 — the forecast arrives over the existing network link.</div></div>
+      <div class="view" id="view-topology"><div class="empty">topology.puml is approved and unchanged by R7.<br>The forecast arrives over the existing network link — nothing here needed to move.</div></div>
 
       <div class="view on" id="view-static">
         <svg width="119" height="8" viewBox="0 0 119 8" style="position:absolute;left:244px;top:148px" preserveAspectRatio="none"><defs><marker id="a1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M0,4 L115,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#a1)"/></svg>
@@ -177,36 +201,35 @@
           <div style="font-size:12px;color:#7a7f8c;text-align:center;margin-top:10px">sketch only — this dialect is not yet in src/core/puml.ts (see tasks.md)</div>
         </div>
       </div>
+
+      <div class="view" id="view-dynamic-unaffected"><div class="empty">water-on-schedule.seq.puml is approved and unaffected by R7.<br>No elements it references changed in this change set.</div></div>
     </div>
   </div>
 
   <aside>
-    <h2>Proposed changes · 3</h2>
+    <div class="aview on" id="aside-static">
+      <h2>Proposed changes · 3 <span style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400">in block-watering.puml</span></h2>
 
-    <div class="card proposed">
-      <div class="top"><span class="name">Add WeatherForecast</span><span class="id">id weather-forecast</span></div>
-      <span class="why">Why: R7 needs a forecast within 12 hours. Nothing in the current architecture provides one.</span>
-      <div class="actions"><button class="accept">Accept</button><button>Rename</button><button class="reject">Reject</button></div>
-    </div>
+      <div class="card proposed">
+        <div class="top"><span class="name">Add WeatherForecast</span><span class="id">id weather-forecast</span></div>
+        <span class="why">Why: R7 needs a forecast within 12 hours. Nothing in the current architecture provides one.</span>
+        <div class="actions"><button class="accept">Accept</button><button>Rename</button><button class="reject">Reject</button></div>
+      </div>
 
-    <div class="card proposed">
-      <div class="top"><span class="name">Add interface ForecastReading</span><span class="id">id forecast-reading</span></div>
-      <span class="why">Why: mirrors MoistureReading so the controller reads both the same way.</span>
-      <div class="actions"><button class="accept">Accept</button><button>Rename</button><button class="reject">Reject</button></div>
-    </div>
+      <div class="card proposed">
+        <div class="top"><span class="name">Add interface ForecastReading</span><span class="id">id forecast-reading</span></div>
+        <span class="why">Why: mirrors MoistureReading so the controller reads both the same way.</span>
+        <div class="actions"><button class="accept">Accept</button><button>Rename</button><button class="reject">Reject</button></div>
+      </div>
 
-    <div class="card modified">
-      <div class="top"><span class="name">Modify WateringController</span><span class="id mod">id watering-controller</span></div>
-      <span class="why">Adds: reads ForecastReading, skip rule, reason log. Code and 2 tests will go stale on approve.</span>
-      <div class="actions"><button class="accept">Accept</button><button>Edit note</button><button class="reject">Reject</button></div>
-    </div>
+      <div class="card modified">
+        <div class="top"><span class="name">Modify WateringController</span><span class="id mod">id watering-controller</span></div>
+        <span class="why">Adds: reads ForecastReading, skip rule, reason log. Code and 2 tests will go stale on approve.</span>
+        <div class="actions"><button class="accept">Accept</button><button>Edit note</button><button class="reject">Reject</button></div>
+      </div>
 
-    <h2 style="margin-top:6px">Other files in this change</h2>
-    <div class="otherview"><span><b>Dynamic</b> · skip-watering-on-rain.seq.puml<br><span style="color:var(--muted)">Scheduler, WateringController, WeatherForecast, PumpDriver</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('dynamic')">Open</button></div>
-    <div class="otherview"><span><b>Static</b> · topology.puml · no change proposed<br><span style="color:var(--muted)">forecast comes over the existing network link</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('topology')">Open</button></div>
-
-    <h2 style="margin-top:6px">PlantUML delta <span style="color:var(--accent);text-transform:none;letter-spacing:0;font-weight:600">live</span></h2>
-    <pre class="diff"><span class="add">+ ' id: weather-forecast
+      <h2>PlantUML delta <span style="text-transform:none;letter-spacing:0;color:var(--accent);font-weight:600">live</span></h2>
+      <pre class="diff"><span class="add">+ ' id: weather-forecast
 + ' req: R7
 + ' status: proposed
 + component "WeatherForecast" as WeatherForecast</span>
@@ -216,32 +239,35 @@
   component "WateringController" as WateringController
 <span class="add">+ WeatherForecast ..&gt; ForecastReading : publishes
 + WateringController ..&gt; ForecastReading : reads</span></pre>
+    </div>
+
+    <div class="aview" id="aside-topology">
+      <h2>topology.puml</h2>
+      <div class="infobox"><b>No changes proposed.</b> Approved Nov 5. R7 is handled inside the existing network link between the controller node and the cloud, so nothing at system/deployment scope needed to move.</div>
+    </div>
+
+    <div class="aview" id="aside-dynamic">
+      <h2>skip-watering-on-rain.seq.puml <span style="text-transform:none;letter-spacing:0;color:var(--proposed);font-weight:600">new file</span></h2>
+      <div class="infobox new"><b>This file does not exist in architecture/ yet.</b> Kiro drafted it for R7 to show the skip-on-rain scenario step by step. It references Scheduler, WateringController, WeatherForecast and PumpDriver — WeatherForecast is itself a new element in block-watering.puml.<br><br>On <b>Approve change set</b>, Doppel writes <span style="font-family:var(--mono)">architecture/skip-watering-on-rain.seq.puml</span> alongside the edited static file. Until then it is a proposal like any element — reviewed, not yet in the repo.</div>
+      <div class="infobox">The sequence dialect is a sketch in this mockup. <span style="font-family:var(--mono)">src/core/puml.ts</span> parses the static dialect only; dynamic files are drawn here but not yet machine-read (tracked in tasks.md).</div>
+    </div>
+
+    <div class="aview" id="aside-dynamic-unaffected">
+      <h2>water-on-schedule.seq.puml</h2>
+      <div class="infobox"><b>No changes proposed.</b> This sequence does not touch WateringController's skip logic, MoistureSensor's path, or any element in this change set.</div>
+    </div>
   </aside>
 </main>
 <script>
-  // category: which top-level tab (static vs dynamic) and which filerow is visible.
-  // view: which .puml file's diagram is shown in the canvas. topology and static (block-watering)
-  // are both files under the static category; dynamic has its own file row.
-  const viewToCat = { topology: 'static', static: 'static', dynamic: 'dynamic' };
-
-  function showView(name) {
-    const cat = viewToCat[name];
-    showCategory(cat, name);
-  }
-
-  function showCategory(cat, preferView) {
-    document.querySelectorAll('#cattabs button').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
-    document.getElementById('filerow-static').style.display = cat === 'static' ? 'flex' : 'none';
-    document.getElementById('filerow-dynamic').style.display = cat === 'dynamic' ? 'flex' : 'none';
-    const row = document.getElementById('filerow-' + cat);
-    const view = preferView || row.querySelector('.chip.on')?.dataset.view || row.querySelector('.chip:not([disabled])').dataset.view;
-    row.querySelectorAll('.chip[data-view]').forEach(c => c.classList.toggle('on', c.dataset.view === view));
+  function select(view, asideId) {
+    document.querySelectorAll('.fitem').forEach(f => f.classList.toggle('on', f.dataset.view === view));
     document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
     document.getElementById('view-' + view).classList.add('on');
+    document.querySelectorAll('.aview').forEach(a => a.classList.remove('on'));
+    document.getElementById('aside-' + asideId).classList.add('on');
   }
-
-  document.querySelectorAll('#cattabs button').forEach(b => b.addEventListener('click', () => showCategory(b.dataset.cat)));
-  document.querySelectorAll('.filerow .chip[data-view]').forEach(c => c.addEventListener('click', () => showView(c.dataset.view)));
+  document.querySelectorAll('.fitem[data-view]').forEach(f =>
+    f.addEventListener('click', () => select(f.dataset.view, f.dataset.aside)));
 </script>
 </body>
 </html>
