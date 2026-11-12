@@ -3,7 +3,7 @@
  *
  * Supported lines (anything else is dropped on parse, see design.md):
  *   @startuml <title> / @enduml
- *   ' id: <id>        ' req: R1, R2        ' status: proposed|approved   (apply to the next element)
+ *   ' id: <id>        ' req: R1, R2        ' status: proposed|approved|modified   (apply to the next element)
  *   component "Name" as Alias     interface "Name" as Alias     (quotes and alias optional)
  *   A --> B : label               A ..> B : label               (..> = proposed link)
  *   note right of A : one line
@@ -70,7 +70,7 @@ export function parse(text: string): Model {
       const value = m[2] ?? '';
       if (key === 'id') pending.id = value;
       else if (key === 'req') pending.req = value.split(',').map((s) => s.trim()).filter(Boolean);
-      else if (key === 'status' && (value === 'proposed' || value === 'approved')) pending.status = value;
+      else if (key === 'status' && (value === 'proposed' || value === 'approved' || value === 'modified')) pending.status = value;
       continue;
     }
 
@@ -126,7 +126,7 @@ export function print(model: Model): string {
     out.push('');
     out.push(`' id: ${e.id}`);
     if (e.req.length) out.push(`' req: ${e.req.join(', ')}`);
-    if (e.status === 'proposed') out.push(`' status: proposed`);
+    if (e.status !== 'approved') out.push(`' status: ${e.status}`);
     out.push(`${e.kind} ${q(e.name)} as ${e.alias}`);
   }
 

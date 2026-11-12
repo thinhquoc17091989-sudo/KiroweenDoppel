@@ -93,7 +93,11 @@ export function render(svg: SVGSVGElement, m: Model, layout: Layout, selected: s
     if (!b) continue;
     const g = el('g', { class: `node ${e.status} ${e.kind}${selected === e.id ? ' hl' : ''}`, 'data-id': e.id, transform: `translate(${b.x},${b.y})` });
     g.append(el('rect', { class: 'body', width: b.w, height: b.h, rx: 6 }));
-    g.append(el('text', { class: 'kind', x: 10, y: 15 }, e.kind === 'interface' ? '«interface»' : e.status === 'proposed' ? '«proposed»' : '«component»'));
+    const kindLabel = e.kind === 'interface' ? '«interface»'
+      : e.status === 'proposed' ? '«proposed»'
+      : e.status === 'modified' ? '«modified»'
+      : '«component»';
+    g.append(el('text', { class: 'kind', x: 10, y: 15 }, kindLabel));
     g.append(el('text', { class: 'label', x: b.w / 2, y: 36, 'text-anchor': 'middle' }, e.name));
     if (e.req.length) g.append(el('text', { class: 'req', x: b.w - 10, y: 15, 'text-anchor': 'end' }, e.req.join(' ')));
     g.addEventListener('pointerdown', (ev) => { h.onSelect(e.id); h.onDragStart(e.id, ev); });

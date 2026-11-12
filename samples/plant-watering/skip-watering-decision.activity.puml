@@ -1,0 +1,26 @@
+@startuml skip-watering-decision
+' id: check-moisture
+' req: R1
+action "Check moisture" as CheckMoisture
+
+' id: rain-decision
+' req: R7
+' status: proposed
+decision "Rain forecast?" as RainDecision
+
+' id: skip-watering
+' req: R7
+' status: proposed
+action "Skip and log reason" as SkipWatering
+
+' id: run-pump
+' req: R2
+action "Run pump" as RunPump
+
+start --> CheckMoisture
+CheckMoisture ..> RainDecision
+RainDecision ..> SkipWatering : yes
+RainDecision --> RunPump : no
+SkipWatering --> end
+RunPump --> end
+@enduml

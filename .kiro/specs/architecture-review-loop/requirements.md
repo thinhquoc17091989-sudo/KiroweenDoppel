@@ -40,3 +40,9 @@ Real SysML, multi-user editing, any hosted backend.
 ### R1 (addendum) Architecture file list
 4. WHEN the project has one or more files under `architecture/`, THEN the review UI SHALL list every one of them, grouped by dialect (static, dynamic), each tagged approved, editing or new.
 5. WHEN a proposal introduces a file that does not exist in `architecture/`, THEN the UI SHALL mark it new and SHALL NOT write it until the reviewer approves the change set.
+
+### R7 Dynamic dialects (new)
+1. WHEN a `.state.puml` file is parsed and printed again, THEN the parsed state diagram SHALL equal the original. (property-based test)
+2. WHEN a `.activity.puml` file is parsed and printed again, THEN the parsed activity diagram SHALL equal the original. (property-based test)
+3. WHEN a `.seq.puml` file is parsed and printed again, THEN the parsed sequence diagram SHALL equal the original. (property-based test)
+4. Each dialect's primary content unit (state / action or decision / message) SHALL carry the same id/req/status triplet as a static element, so trace.json can reference it the same way.

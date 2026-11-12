@@ -55,7 +55,9 @@ function listItem(e: Model['elements'][number]): HTMLLIElement {
     b.addEventListener('click', (ev) => { ev.stopPropagation(); fn(); });
     actions.append(b);
   };
-  if (e.status === 'proposed') btn('Accept', 'ok', () => { setModel(accept(state.model, e.id)); toast(`${e.name} approved`); }, 'Approve this element');
+  if (e.status === 'proposed' || e.status === 'modified') {
+    btn('Accept', 'ok', () => { setModel(accept(state.model, e.id)); toast(`${e.name} approved`); }, 'Approve this element');
+  }
   btn('Rename', '', () => doRename(e.id), 'Rename, the id stays the same');
   btn('Reject', 'warn', () => { setModel(reject(state.model, e.id)); toast(`${e.name} removed`); }, 'Remove this element and its links');
   li.append(info, actions);
@@ -72,7 +74,9 @@ function fillList(sel: string, countSel: string, items: Model['elements']) {
 
 function draw() {
   render(svg, state.model, state.layout, state.selected, { onSelect, onRename: doRename, onDragStart });
-  fillList('#listProposed', '#countProposed', state.model.elements.filter((e) => e.status === 'proposed'));
+  // 'modified' sits in the Proposed list too: like a new proposal, it still awaits a
+  // decision, even though approvedOnly() already ships its current content either way.
+  fillList('#listProposed', '#countProposed', state.model.elements.filter((e) => e.status === 'proposed' || e.status === 'modified'));
   fillList('#listApproved', '#countApproved', state.model.elements.filter((e) => e.status === 'approved'));
   $('#puml').textContent = print(state.model);
 }

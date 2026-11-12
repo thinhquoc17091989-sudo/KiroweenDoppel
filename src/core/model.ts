@@ -1,7 +1,12 @@
 /** Doppel architecture model. One file = one diagram = one Model. */
 
 export type ElementKind = 'component' | 'interface';
-export type Status = 'proposed' | 'approved';
+/** 'modified': an already-approved element whose block changed and awaits re-approval.
+ *  It ships as current content (approvedOnly keeps it), and a link naming only modified
+ *  and approved ends stays solid (refreshLinkStatus dashes a link only when one of its
+ *  ends is 'proposed' — brand new, not yet in the architecture at all). The UI still
+ *  shows it as a pending decision, distinct from 'approved', via its own color. */
+export type Status = 'proposed' | 'approved' | 'modified';
 export type NoteSide = 'right' | 'left' | 'top' | 'bottom';
 
 export interface Element {

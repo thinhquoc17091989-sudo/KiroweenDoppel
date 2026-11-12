@@ -17,7 +17,7 @@
 ## Week 3, Nov 24 to 30: MCP, second sample, polish
 - [ ] 10. (K, C reviews) drift-mcp server with `check_drift` and `list_trace`; register in `.kiro/settings/mcp.json`; hook calls it (R6)
 - [ ] 11. (K) Second sample system `samples/library-lending` to show versatility
-- [ ] 11a. (C) Add `status: 'modified'` to src/core/model.ts and wire it through review.ts, layout.ts, render.ts
+- [x] 11a. (C) Add `status: 'modified'` to the Status type (now shared via dsl.ts across every dialect) and wire it through review.ts, render.ts, main.ts, style.css
 - [ ] 11b. (C) Multi-file architecture: a file picker inside Static, one element id resolvable across files, layout merge aware of which file an element came from
 - [ ] 12. (C) UI polish, dark theme, GitHub Pages deploy
 - [ ] 13. (K) README: Kiro usage write-up with one sentence per feature and what it changed
@@ -25,3 +25,12 @@
 ## Week 4, Dec 1 to 4: ship
 - [ ] 14. (U) Credits deadline Dec 1 noon PT. Record 3-minute video: open diagram, accept and rename, approve, hook generates files, rename again, trace goes stale, drift tool reports, Kiro fixes.
 - [ ] 15. (U, C drafts) Blog post and #KiroweenHackathon26 social post. Submit on Devpost by Dec 3 to keep a day of buffer.
+
+## Dynamic dialects (added 2026-11-12, referencing Diagraph/SysArch layout ideas)
+- [x] 16. (C) Shared dsl.ts (envelope + id/req/status comment) and rank.ts (longest-path ranking), layout.ts's layers() refactored onto it
+- [x] 17. (C) State machine dialect: src/core/state.ts, property-based round-trip test
+- [x] 18. (C) Activity dialect: src/core/activity.ts, property-based round-trip test
+- [x] 19. (C) Sequence dialect: src/core/sequence.ts, property-based round-trip test
+- [x] 20. (K, Haiku 5.5) Draft the three R7 sample files (state/activity/sequence), verified by parsing them with the real parsers (test/samples.test.ts), not by trusting the model's own report
+- [ ] 21. (C) Render each dynamic dialect in the review UI; extend the file-list sidebar to multi-dialect selection; persist layout per file
+- [ ] 22. (C) reject() on a 'modified' element: store a pre-change snapshot so reject can revert instead of delete

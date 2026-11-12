@@ -15,6 +15,14 @@ export function accept(m: Model, id: string): Model {
   });
 }
 
+/**
+ * Known simplification: for a 'modified' element (already approved before, changed since),
+ * the right behavior is arguably to revert to its prior approved content, not delete it
+ * outright. That needs a stored snapshot of the pre-change block, which nothing here keeps
+ * yet. Until then, reject removes the element the same way for every status — correct for
+ * 'proposed' (never existed), too strong for 'modified' (existed, now gone instead of
+ * reverted). Flagged rather than silently shipped as if it were right.
+ */
 export function reject(m: Model, id: string): Model {
   return {
     ...m,
@@ -35,9 +43,9 @@ export function rename(m: Model, id: string, name: string): Model {
   return { ...m, elements: m.elements.map((e) => (e.id === id ? { ...e, name: clean, alias } : e)) };
 }
 
-/** Only approved elements and the links and notes between them. */
+/** Approved and modified elements ship; only 'proposed' (never yet approved) is held back. */
 export function approvedOnly(m: Model): Model {
-  const keep = new Set(m.elements.filter((e) => e.status === 'approved').map((e) => e.id));
+  const keep = new Set(m.elements.filter((e) => e.status === 'approved' || e.status === 'modified').map((e) => e.id));
   return {
     title: m.title,
     elements: m.elements.filter((e) => keep.has(e.id)),

@@ -72,3 +72,57 @@ Superseding the tab-plus-chip navigation above: the review UI shows one persiste
 - **editing** — open now, with proposed or modified elements pending a decision.
 - **new** — a file Kiro drafted for this change that does not exist in `architecture/` yet; it is written only when the reviewer approves the change set.
 This generalizes the earlier model/parser note (an element can span static files) up one level: a *project* can hold any number of static and dynamic files, and the reviewer needs to see all of them, not just the one or two touched by the current change, so they always know what exists before deciding what to approve. `propose-mcp` (planned) must therefore report, per proposal, which existing file it edits versus which new file it creates, so the UI can set each file's status correctly; this is new information beyond what today's single-file model carries.
+
+## Dynamic dialects: Sequence, State Machine, Activity (2026-11-12)
+Three new parser/printer modules, matching the static dialect's shape (own file per dialect,
+`' id:` / `' req:` / `' status:` comment triplet, property-based round-trip test), layout
+ideas borrowed from Diagraph/SysArch as ideas only per steering's origin rule, no code shared:
+
+- Shared foundation: `src/core/dsl.ts` factors the envelope-stripping and meta-comment
+  pattern all three (and, going forward, the static dialect too) rely on. `src/core/rank.ts`
+  factors the longest-path DAG ranking Diagraph uses for both its block layout (left-to-right)
+  and its activity/state layout (top-to-bottom), one algorithm, the caller picks the axis.
+  `src/core/layout.ts`'s existing `layers()` now calls it too, a safe refactor since the
+  existing property and unit tests covered the old inline version and still pass unchanged.
+- State machine (`src/core/state.ts`, `*.state.puml`): one flat machine only, no composite
+  states, no concurrency, no choice/fork/history pseudostates (Diagraph supports all of
+  these; this slice deliberately does not, tracked as follow-up). The start/end pseudostate
+  token is positional: valid only as a transition's from (meaning initial) or to (final),
+  never the reverse, matching what real PlantUML state-machine text without reversed arrows
+  can express. A transition directly from the initial token to the final one is genuinely
+  ambiguous even in real PlantUML and is dropped on parse, the same choice Diagraph's own
+  importer makes. Layout: rankByLongestPath over states and transitions, rank becomes a row
+  top-to-bottom, reusing Diagraph's observation that a state machine reads downward.
+- Activity (`src/core/activity.ts`, `*.activity.puml`): NOT real PlantUML activity syntax,
+  which chains steps implicitly and has no natural place for a stable id. This dialect
+  declares action/decision nodes with an alias and connects them with explicit edges
+  instead, a named departure, not an oversight. The start/end tokens are reserved words
+  here, not a positional pseudostate like state's; the printer treats both ends fully
+  symmetrically (fixed mid-implementation: an edge using end as a source or start as a
+  destination, odd but not a parse error, used to vanish silently on print because only one
+  direction of each was handled). While/repeat loops, fork/join and partitions are out of
+  this slice, no loops means the layout is always a plain DAG, so it reuses
+  rankByLongestPath directly with no cycle-breaking pass.
+- Sequence (`src/core/sequence.ts`, `*.seq.puml`): closest to real PlantUML of the three,
+  since a message already is one addressable, ordered line. The message carries the
+  id/req/status triplet here, not the participant, a message is what a change actually adds
+  or edits; participants are structural, like a static diagram's declared names. No
+  fragments and no activation bars in this slice. Layout needs no ranking algorithm at all:
+  column is participant declaration order, row is message declaration order.
+- Status, uniformly: every dialect's primary content unit (element / state / action /
+  decision / message) carries the same tri-state proposed, approved or modified now used
+  project-wide (model.ts's Status widened to match; a modified status now round-trips
+  through the static dialect's own parser and printer too, which only handled the first two
+  until this pass). Secondary things, static Links, state Transitions, activity Edges, stay
+  a plain proposed boolean, same as before; only the primary unit gets its own id.
+- review.ts, three real fixes: approvedOnly now ships modified elements, not only approved
+  ones (it used to silently drop them). refreshLinkStatus already dashed a link only for a
+  proposed end, which turned out to already match the mockup's intent (a modified element's
+  existing links stay solid), so no change was needed there, just confirmation. reject on a
+  modified element still deletes it outright; the arguably correct behavior, revert to the
+  prior approved content, needs a stored pre-change snapshot that nothing here keeps yet,
+  flagged in code as a known simplification, not fixed blind.
+- Not done this pass, by design: wiring these three dialects into the review UI (a renderer
+  per dialect, multi-dialect file-list integration, layout persistence per file). That is
+  real, separate UI work, scoped as follow-up rather than rushed alongside the parser and
+  model work above.

@@ -1,0 +1,19 @@
+@startuml watering-controller
+' id: idle
+state "Idle" as Idle
+
+' id: watering
+state "Watering" as Watering
+
+' id: skipped
+' req: R7
+' status: proposed
+state "Skipped" as Skipped
+
+[*] --> Idle
+Idle --> Watering : moisture low
+Watering --> Idle : moisture ok
+Idle ..> Skipped : rain forecast
+Skipped --> Idle : window passed
+Watering --> [*]
+@enduml

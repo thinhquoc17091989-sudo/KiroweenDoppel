@@ -9,6 +9,7 @@
   --accent: #ff7a1a;
   --accent-ink: #1a1a1a;
   --proposed: #7a4bd6;
+  --modified: #b7791f;
   --approved: #1f6f4a;
   --iface: #2a6fb8;
   --note: #fff3b0;
@@ -63,6 +64,7 @@ aside h2 small { font-weight: 500; text-transform: none; letter-spacing: 0; colo
 .node rect.body { fill: #fff; stroke-width: 2; }
 .node.proposed rect.body { stroke: var(--proposed); stroke-dasharray: 7 5; fill: #faf7ff; }
 .node.approved rect.body { stroke: var(--approved); }
+.node.modified rect.body { stroke: var(--modified); fill: #fff8e8; }
 .node.interface rect.body { stroke: var(--iface); rx: 18; }
 .node.interface.proposed rect.body { fill: #f3f8ff; }
 .node text.label { font: 600 13px var(--sans); fill: var(--ink); pointer-events: none; }

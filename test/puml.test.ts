@@ -51,7 +51,7 @@ const kebab = fc.stringMatching(/^[a-z][a-z0-9]{0,7}(-[a-z0-9]{1,6}){0,2}$/);
 const req = fc.array(fc.stringMatching(/^R[1-9][0-9]?$/), { maxLength: 3 }).map((a) => [...new Set(a)]);
 const label = fc.stringMatching(/^[A-Za-z][A-Za-z0-9 ]{0,20}[A-Za-z0-9]$/).map((s) => s.trim());
 const noteLine = fc.stringMatching(/^[A-Za-z][A-Za-z0-9 ,.]{0,30}[A-Za-z0-9.]$/);
-const status: fc.Arbitrary<Status> = fc.constantFrom('proposed', 'approved');
+const status: fc.Arbitrary<Status> = fc.constantFrom('proposed', 'approved', 'modified');
 
 const arbModel: fc.Arbitrary<Model> = fc
   .uniqueArray(fc.tuple(kebab, word), {

@@ -1,0 +1,24 @@
+@startuml skip-watering-on-rain
+participant "Scheduler" as Scheduler
+participant "WateringController" as WateringController
+participant "WeatherForecast" as WeatherForecast
+participant "PumpDriver" as PumpDriver
+
+' id: tick
+' req: R3
+Scheduler -> WateringController : tick
+
+' id: get-forecast
+' req: R7
+' status: proposed
+WateringController ..> WeatherForecast : getForecast
+
+' id: forecast-reply
+' req: R7
+' status: proposed
+WeatherForecast ..> WateringController : rain within 12h true
+
+' id: run-pump-msg
+' req: R2
+WateringController -> PumpDriver : run
+@enduml

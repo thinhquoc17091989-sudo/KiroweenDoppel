@@ -7,6 +7,7 @@
  * ever re-arranged behind the reviewer's back unless they press Arrange.
  */
 import type { Model } from './model';
+import { rankByLongestPath } from './rank';
 
 export interface Pos { x: number; y: number }
 export type Layout = Record<string, Pos>;
@@ -34,25 +35,7 @@ function rightNoteWidth(m: Model, id: string): number {
 
 /** Longest-path layering: an element sits one column right of everything that links into it. */
 function layers(m: Model): Map<string, number> {
-  const depth = new Map<string, number>();
-  const incoming = new Map<string, string[]>();
-  for (const e of m.elements) incoming.set(e.id, []);
-  for (const l of m.links) if (l.from !== l.to) incoming.get(l.to)?.push(l.from);
-
-  const visiting = new Set<string>();
-  const dfs = (id: string): number => {
-    const known = depth.get(id);
-    if (known !== undefined) return known;
-    if (visiting.has(id)) return 0; // cycle guard
-    visiting.add(id);
-    let d = 0;
-    for (const p of incoming.get(id) ?? []) d = Math.max(d, dfs(p) + 1);
-    visiting.delete(id);
-    depth.set(id, d);
-    return d;
-  };
-  for (const e of m.elements) dfs(e.id);
-  return depth;
+  return rankByLongestPath(m.elements.map((e) => e.id), m.links);
 }
 
 /** Fresh positions for every element, ignoring the current layout. */
