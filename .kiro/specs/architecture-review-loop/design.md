@@ -43,3 +43,18 @@ File Create, File Save and File Delete hooks fire only on changes made by the ag
 - `on-architecture-change.json`, `PostFileSave` on `architecture/.*\.puml$`: fires when Kiro itself edits the architecture, for example when the reviewer asks Kiro to split or rename an element in chat.
 - `drift-on-prompt.json`, `PromptSubmit` command hook: runs the drift checker before every prompt, so an approval made in the UI is seen by the agent on the next message without the reviewer having to describe it. To verify in task 8: that a command hook's stdout is injected into the agent context on this Kiro version.
 Both hooks exist in `.kiro/hooks/` as JSON with `version: "v1"`, a `hooks` array, PascalCase `trigger`, regex `matcher`, and an `action` of type `agent` or `command`.
+
+## Entry point is Kiro chat, not a Doppel screen (2026-11-12)
+There is no Doppel "ask Kiro" page. The reviewer talks to Kiro directly, in the IDE, CLI or Web, the way they would for any other request. Two things make that sufficient:
+- **New vs continuing is free.** `.kiro/steering/architecture.md` is always-included and references `architecture/*.puml`. An empty glob means no approved architecture exists yet, so Kiro is starting fresh; a non-empty one means it is proposing a change against what is there. Kiro infers this from context already loaded on every request. Nothing in Doppel needs to detect or tell it which case it is.
+- **`propose-mcp`** (new component, see below): a small MCP tool Kiro calls on its own after a chat request, never a UI the reviewer opens. It writes the actual `proposals.puml` delta in the exact dialect `src/core/puml.ts` parses: stable kebab-case ids, `' req:` lines, `' status: proposed` on new or changed elements, `' status: modified` on an existing approved element whose block changed (see Status below). This exists because free-form generation drifts on exact syntax over many turns; a tool call does not.
+- Doppel's own UI starts at review: the diagram with proposed and modified elements, the change list, accept/rename/reject, approve. Trace and drift come after approval. These are the two mockup pages kept as plain HTML (see Mockups below).
+
+## Status gains `modified` (change needed in src/core/model.ts)
+The model's `Status` is `'proposed' | 'approved'` today. The mockup needs a third state: an **approved** element whose block changed since last approval, drawn amber, listed with a diff-style note, and counted as stale in the trace table even before the reviewer re-approves it. Add `'modified'` to `Status`; `approvedOnly()` treats `modified` as still-approved content (it ships) but `refreshLinkStatus` and the UI continue to show it as a pending decision. Not yet implemented; tracked as a task.
+
+## Mockups
+Static, non-interactive HTML files under `mockups/`, viewed directly in a browser, no publishing step and no dependency on any hosted service:
+- `mockups/review.html`: the diagram with existing (solid green), modified (amber) and proposed (dashed purple) elements, switchable by tabs for Topology / Static / Dynamic (dynamic is a sequence-diagram sketch, out of scope for the coded parser in this slice), the change list with accept/rename/reject and reasons, and the live PlantUML diff.
+- `mockups/trace.html`: the requirement-to-test table including missing and orphan rows, and the drift report with what Kiro will do about each item.
+These superseded an earlier version of the same two screens plus a since-dropped "ask Kiro" screen, built as a hosted design-canvas artifact for a first look; that artifact still exists privately but is not part of the repo or the submission.

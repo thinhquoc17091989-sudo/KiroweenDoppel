@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — Review the proposed change</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342; --paper:#f5f3ec; --grid:#e6e2d6;
+    --ink:#1f232c; --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --existing:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --iface:#2a6fb8;
+    --ok:#9fe0b8; --ok-bg:#173a2a; --warn:#ffcf7a; --warn-bg:#3d2e12; --bad:#f0a0a0; --bad-bg:#3d1a1a;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 56px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .brand { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .pill { font-size: 12px; font-weight: 600; padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); }
+  .ctx { font-size: 12px; color: var(--muted); }
+  .ctx b { color: #ffb77a; font-weight: 600; }
+  .spacer { flex: 1; }
+  .tabs { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; }
+  .tabs button { font: 600 12px var(--sans); padding: 7px 14px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; min-height: 32px; }
+  .tabs button.on { background: var(--accent); color: var(--accent-ink); }
+  button.ghost { font: 600 12px var(--sans); padding: 9px 12px; background: transparent; color: #cfd5e3; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; min-height: 36px; }
+  button.primary { font: 600 12px var(--sans); padding: 9px 14px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; min-height: 36px; }
+  main { display: flex; flex-wrap: wrap; min-height: calc(100vh - 56px); }
+  .canvasCol { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; }
+  .statusbar { display: flex; gap: 18px; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .statusbar b { color: #e6e9f0; }
+  .canvasWrap { flex: 1; position: relative; background: var(--paper);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px; overflow: auto; }
+  .view { position: relative; width: 980px; height: 560px; display: none; }
+  .view.on { display: block; }
+  .node { position: absolute; box-sizing: border-box; padding: 8px; display: flex; align-items: center; justify-content: center;
+    text-align: center; background: #fff; border-radius: 8px; color: var(--ink); font-size: 14px; line-height: 18px; border: 2px solid; }
+  .node .meta { font-size: 11px; display: block; }
+  .node.existing { border-color: var(--existing); }
+  .node.modified { border-color: var(--modified); background: #fff8e8; }
+  .node.proposed { border-color: var(--proposed); border-style: dashed; background: #faf7ff; }
+  .node.iface { border-radius: 32px; }
+  .node.iface .meta { color: var(--iface); }
+  .lbl { position: absolute; font-size: 13px; line-height: 16px; color: #4a4f5c; text-align: center; }
+  .lbl.proposed { color: var(--proposed); }
+  .note { position: absolute; background: #fff3b0; border: 1px solid #d8c45a; border-radius: 3px; color: #4a4a2a; font-size: 12px; line-height: 16px; padding: 8px 10px; }
+  .legend { position: absolute; left: 20px; bottom: 16px; display: flex; gap: 14px; font-size: 12px; color: #4a4f5c; background: rgba(255,255,255,.78); padding: 6px 10px; border-radius: 6px; }
+  .legend .sw { display: inline-block; width: 16px; height: 9px; border-radius: 2px; border-width: 2px; border-style: solid; vertical-align: middle; margin-right: 6px; }
+  .sw.existing { border-color: var(--existing); }
+  .sw.modified { border-color: var(--modified); background: #fff8e8; }
+  .sw.proposed { border-color: var(--proposed); border-style: dashed; background: #faf7ff; }
+  .sw.iface { border-color: var(--iface); border-radius: 6px; }
+  .empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #8b8f82; font-size: 14px; }
+  aside { flex: 1 1 380px; max-width: 420px; background: var(--panel); border-left: 1px solid var(--line); padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px; overflow: auto; max-height: calc(100vh - 56px); }
+  aside h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 6px 0 0; font-weight: 600; }
+  .card { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .card.proposed { border-color: var(--proposed); }
+  .card.modified { border-color: var(--modified); }
+  .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card .name { font-size: 13px; font-weight: 600; }
+  .card .id { font-size: 11px; font-family: var(--mono); color: #c7a9ff; }
+  .card .id.mod { color: var(--warn); }
+  .card .why { font-size: 12px; color: var(--muted); line-height: 17px; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .actions button { font: 600 12px var(--sans); padding: 6px 10px; background: transparent; border-radius: 6px; cursor: pointer; min-height: 32px; border: 1px solid var(--line); color: #cfd5e3; }
+  .actions button.accept { color: var(--ok); border-color: #2f6b4a; }
+  .actions button.reject { color: var(--bad); border-color: #6b2f2f; }
+  .otherview { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .otherview b { color: #e6e9f0; }
+  pre.diff { margin: 0; font: 11.5px/1.5 var(--mono); background: #12151c; border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px; white-space: pre; overflow: auto; color: #c8d0e0; }
+  pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.diff .chg { color: var(--warn); }
+  @media (max-width: 900px) { main { flex-direction: column; } aside { max-width: none; border-left: 0; border-top: 1px solid var(--line); max-height: none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Doppel</span>
+  <span class="pill">plant-watering</span>
+  <span class="ctx">change for <b>R7 skip watering when rain is forecast</b></span>
+  <span class="spacer"></span>
+  <div class="tabs" id="tabs">
+    <button data-view="topology">Topology</button>
+    <button data-view="static" class="on">Static · 3 changes</button>
+    <button data-view="dynamic">Dynamic · 1 sequence</button>
+  </div>
+  <button class="ghost">Ask Kiro again</button>
+  <button class="primary">Approve change set</button>
+</header>
+<main>
+  <div class="canvasCol">
+    <div class="statusbar">
+      <span>Kiro read <b>3 architecture files</b>, <b>12 modules</b>, <b>trace.json</b></span>
+      <span style="color:#4a5570">|</span>
+      <span><b style="color:#c7a9ff">2 added</b> · <b style="color:#ffcf7a">1 modified</b> · <b>0 removed</b> · 5 unchanged</span>
+      <span style="color:#4a5570">|</span>
+      <span>drag to place · double-click to rename · ids never change (mockup: static only)</span>
+    </div>
+    <div class="canvasWrap">
+
+      <div class="view" id="view-topology"><div class="empty">Topology: no change proposed for R7 — the forecast arrives over the existing network link.</div></div>
+
+      <div class="view on" id="view-static">
+        <svg width="119" height="8" viewBox="0 0 119 8" style="position:absolute;left:244px;top:148px" preserveAspectRatio="none"><defs><marker id="a1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M0,4 L115,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#a1)"/></svg>
+        <svg width="119" height="8" viewBox="0 0 119 8" style="position:absolute;left:244px;top:272px" preserveAspectRatio="none"><defs><marker id="a2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M0,4 L115,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#a2)"/></svg>
+        <svg width="159" height="8" viewBox="0 0 159 8" style="position:absolute;left:564px;top:272px" preserveAspectRatio="none"><defs><marker id="a3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M0,4 L155,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#a3)"/></svg>
+        <svg width="8" height="59" viewBox="0 0 8 59" style="position:absolute;left:460px;top:185px" preserveAspectRatio="none"><defs><marker id="a4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M4,59 L4,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#a4)"/></svg>
+        <svg width="119" height="8" viewBox="0 0 119 8" style="position:absolute;left:244px;top:440px" preserveAspectRatio="none"><defs><marker id="a5" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs><path d="M0,4 L115,4" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#a5)"/></svg>
+        <svg width="8" height="103" viewBox="0 0 8 103" style="position:absolute;left:460px;top:308px" preserveAspectRatio="none"><defs><marker id="a6" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs><path d="M4,0 L4,99" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#a6)"/></svg>
+
+        <div class="node existing" style="left:64px;top:120px;width:180px;height:64px"><span><b>MoistureSensor</b><span class="meta">component · R1</span></span></div>
+        <div class="node existing" style="left:64px;top:244px;width:180px;height:64px"><span><b>Scheduler</b><span class="meta">component · R3</span></span></div>
+        <div class="node proposed" style="left:64px;top:412px;width:180px;height:64px"><span><b>WeatherForecast</b><span class="meta" style="color:var(--proposed)">proposed · R7</span></span></div>
+        <div class="node existing iface" style="left:364px;top:120px;width:200px;height:64px"><span><b>MoistureReading</b><span class="meta">interface</span></span></div>
+        <div class="node modified" style="left:364px;top:244px;width:200px;height:64px"><span><b>WateringController</b><span class="meta" style="color:var(--modified)">modified · R1 R2 R7</span></span></div>
+        <div class="node proposed iface" style="left:364px;top:412px;width:200px;height:64px"><span><b>ForecastReading</b><span class="meta">proposed interface</span></span></div>
+        <div class="node existing" style="left:724px;top:244px;width:180px;height:64px"><span><b>PumpDriver</b><span class="meta">component · R2</span></span></div>
+
+        <div class="lbl" style="left:268px;top:124px;width:72px">publishes</div>
+        <div class="lbl" style="left:272px;top:288px;width:64px">triggers</div>
+        <div class="lbl" style="left:604px;top:248px;width:80px">commands</div>
+        <div class="lbl" style="left:476px;top:206px;width:44px">reads</div>
+        <div class="lbl proposed" style="left:268px;top:416px;width:72px">publishes</div>
+        <div class="lbl proposed" style="left:476px;top:352px;width:44px">reads</div>
+
+        <div class="note" style="left:724px;top:400px;width:200px">Kiro: the skip rule belongs in WateringController, not a new component, because it already owns the watering decision.</div>
+        <div class="legend">
+          <span><i class="sw existing"></i>existing</span>
+          <span><i class="sw modified"></i>modified</span>
+          <span><i class="sw proposed"></i>proposed</span>
+          <span><i class="sw iface"></i>interface</span>
+        </div>
+      </div>
+
+      <div class="view" id="view-dynamic">
+        <div style="position:absolute;left:40px;top:40px;right:40px;bottom:40px">
+          <div style="display:flex;justify-content:space-between;max-width:760px;margin:0 auto 0">
+            <div style="font-size:12px;font-weight:700;text-align:center;width:110px">Scheduler</div>
+            <div style="font-size:12px;font-weight:700;text-align:center;width:150px">WateringController</div>
+            <div style="font-size:12px;font-weight:700;text-align:center;width:150px;color:#7a4bd6">WeatherForecast</div>
+            <div style="font-size:12px;font-weight:700;text-align:center;width:110px">PumpDriver</div>
+          </div>
+          <div style="position:relative;max-width:760px;margin:8px auto 0;height:380px">
+            <div style="position:absolute;left:55px;top:0;bottom:0;width:1px;background:#c7c2b2"></div>
+            <div style="position:absolute;left:205px;top:0;bottom:0;width:1px;background:#c7c2b2"></div>
+            <div style="position:absolute;left:355px;top:0;bottom:0;width:1px;background:#7a4bd6;opacity:.5"></div>
+            <div style="position:absolute;left:505px;top:0;bottom:0;width:1px;background:#c7c2b2"></div>
+            <svg width="150" height="8" style="position:absolute;left:55px;top:40px"><path d="M0,4 L146,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#dyn1)"/><defs><marker id="dyn1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs></svg>
+            <div class="lbl" style="left:55px;top:16px;width:150px">tick</div>
+            <svg width="150" height="8" style="position:absolute;left:205px;top:96px" stroke-dasharray="6 6"><path d="M0,4 L146,4" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#dyn2)"/><defs><marker id="dyn2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs></svg>
+            <div class="lbl proposed" style="left:205px;top:72px;width:150px">getForecast() <i>new</i></div>
+            <svg width="150" height="8" style="position:absolute;left:355px;top:152px"><path d="M146,4 L0,4" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#dyn3)"/><defs><marker id="dyn3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs></svg>
+            <div class="lbl proposed" style="left:355px;top:128px;width:150px">rain within 12h: true</div>
+            <div style="position:absolute;left:180px;top:200px;width:200px;text-align:center;font-size:12px;background:#fff3b0;border:1px solid #d8c45a;border-radius:3px;padding:6px 10px">alt: rain forecast → skip and log reason <i>(R7, new branch)</i></div>
+            <svg width="150" height="8" style="position:absolute;left:205px;top:300px" stroke-dasharray="4 4"><path d="M0,4 L146,4" stroke="#8a8378" stroke-width="2" stroke-dasharray="4 4"/></svg>
+            <div class="lbl" style="left:205px;top:276px;width:150px">else: no rain</div>
+            <svg width="150" height="8" style="position:absolute;left:55px;top:340px"><path d="M146,4 L0,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#dyn4)"/><defs><marker id="dyn4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs></svg>
+            <div class="lbl" style="left:55px;top:316px;width:150px">ack</div>
+          </div>
+          <div style="font-size:12px;color:#7a7f8c;text-align:center;margin-top:10px">sketch only — this dialect is not yet in src/core/puml.ts (see tasks.md)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside>
+    <h2>Proposed changes · 3</h2>
+
+    <div class="card proposed">
+      <div class="top"><span class="name">Add WeatherForecast</span><span class="id">id weather-forecast</span></div>
+      <span class="why">Why: R7 needs a forecast within 12 hours. Nothing in the current architecture provides one.</span>
+      <div class="actions"><button class="accept">Accept</button><button>Rename</button><button class="reject">Reject</button></div>
+    </div>
+
+    <div class="card proposed">
+      <div class="top"><span class="name">Add interface ForecastReading</span><span class="id">id forecast-reading</span></div>
+      <span class="why">Why: mirrors MoistureReading so the controller reads both the same way.</span>
+      <div class="actions"><button class="accept">Accept</button><button>Rename</button><button class="reject">Reject</button></div>
+    </div>
+
+    <div class="card modified">
+      <div class="top"><span class="name">Modify WateringController</span><span class="id mod">id watering-controller</span></div>
+      <span class="why">Adds: reads ForecastReading, skip rule, reason log. Code and 2 tests will go stale on approve.</span>
+      <div class="actions"><button class="accept">Accept</button><button>Edit note</button><button class="reject">Reject</button></div>
+    </div>
+
+    <h2 style="margin-top:6px">Other views in this change</h2>
+    <div class="otherview"><span><b>Dynamic</b> · sequence "skip watering on rain"<br><span style="color:var(--muted)">Scheduler, WateringController, WeatherForecast, PumpDriver</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('dynamic')">Open</button></div>
+    <div class="otherview"><span><b>Topology</b> · no change proposed<br><span style="color:var(--muted)">forecast comes over the existing network link</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('topology')">Open</button></div>
+
+    <h2 style="margin-top:6px">PlantUML delta <span style="color:var(--accent);text-transform:none;letter-spacing:0;font-weight:600">live</span></h2>
+    <pre class="diff"><span class="add">+ ' id: weather-forecast
++ ' req: R7
++ ' status: proposed
++ component "WeatherForecast" as WeatherForecast</span>
+  ' id: watering-controller
+<span class="del">- ' req: R1, R2</span>
+<span class="chg">+ ' req: R1, R2, R7</span>
+  component "WateringController" as WateringController
+<span class="add">+ WeatherForecast ..&gt; ForecastReading : publishes
++ WateringController ..&gt; ForecastReading : reads</span></pre>
+  </aside>
+</main>
+<script>
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+    document.getElementById('view-' + name).classList.add('on');
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === name));
+  }
+  document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+</script>
+</body>
+</html>

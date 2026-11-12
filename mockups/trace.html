@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — Trace and drift</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --line:#2d3342; --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --ok:#9fe0b8; --ok-bg:#173a2a; --warn:#ffcf7a; --warn-bg:#3d2e12; --bad:#f0a0a0; --bad-bg:#3d1a1a; --proposed:#c7a9ff;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 56px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .brand { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .pill { font-size: 12px; font-weight: 600; padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); }
+  .ctx { font-size: 12px; color: var(--muted); }
+  .ctx b { color: #cfd5e3; font-weight: 600; font-family: var(--mono); }
+  .spacer { flex: 1; }
+  .step { font-size: 12px; color: #6f788c; }
+  .step.on { color: var(--accent); font-weight: 600; }
+  main { display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; max-width: 1392px; margin: 0 auto; }
+  .col { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  h1 { margin: 0; font-size: 22px; font-weight: 700; }
+  .hint { font-size: 12px; color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13px; }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  thead tr { background: var(--panel); color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+  th, td { text-align: left; padding: 10px 12px; font-weight: 600; }
+  tbody td { font-family: var(--mono); font-size: 12px; font-weight: 400; color: #cfd5e3; }
+  tbody tr { border-top: 1px solid var(--line); }
+  tbody tr.flag { background: #1a1d27; }
+  td.name { font-family: var(--sans); font-weight: 600; color: #e6e9f0; }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-weight: 600; }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  .badge.bad { background: var(--bad-bg); color: var(--bad); }
+  .missing { color: var(--bad); font-family: var(--sans); }
+  .summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .summary .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .summary .card.warn { border-color: #b7791f; }
+  .summary .card.proposed { border-color: #7a4bd6; }
+  .summary .label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  aside { flex: 1 1 360px; max-width: 400px; display: flex; flex-direction: column; gap: 14px; }
+  .drift { background: var(--panel); border: 1px solid var(--accent); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .drift .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .drift .label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .drift .ts { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .ditem { display: flex; gap: 10px; font-size: 13px; line-height: 18px; }
+  .ditem .n { font-weight: 700; width: 14px; flex: none; }
+  .n.bad { color: var(--bad); } .n.warn { color: var(--warn); } .n.proposed { color: var(--proposed); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .actions button { font: 600 13px var(--sans); padding: 10px 14px; border-radius: 7px; cursor: pointer; min-height: 44px; }
+  .actions .primary { background: var(--accent); color: var(--accent-ink); border: 0; }
+  .actions .ghost { background: transparent; color: #cfd5e3; border: 1px solid var(--line); }
+  .plan { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .plan .steps { font-size: 13px; line-height: 19px; display: flex; flex-direction: column; gap: 6px; }
+  .why { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; font-size: 12px; color: var(--muted); line-height: 18px; }
+  .why b { color: #e6e9f0; }
+  @media (max-width: 900px) { main { flex-direction: column; } aside { max-width: none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">Doppel</span>
+  <span class="pill">plant-watering</span>
+  <span class="ctx">approved change <b>R7</b> · 2 minutes ago · commit <b>a41c9e0</b></span>
+  <span class="spacer"></span>
+  <span class="step">1 Review</span>
+  <span class="step on">2 Trace</span>
+</header>
+<main>
+  <div class="col">
+    <div>
+      <h1>Requirement to test, one row per element</h1>
+      <div class="hint">state is a hash of the element block against the hash stored when its code was generated</div>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Requirement</th><th>Element</th><th>Code</th><th>Test</th><th>View</th><th>State</th></tr></thead>
+        <tbody>
+          <tr><td>R1</td><td class="name">MoistureSensor</td><td>src/moisture-sensor.ts</td><td>test/moisture-sensor.test.ts</td><td>static</td><td><span class="badge ok">in sync</span></td></tr>
+          <tr><td>R1 R2 R7</td><td class="name">WateringController</td><td>src/watering-controller.ts</td><td>test/watering-controller.test.ts</td><td>static · dynamic</td><td><span class="badge warn">stale</span></td></tr>
+          <tr><td>R2</td><td class="name">PumpDriver</td><td>src/pump-driver.ts</td><td>test/pump-driver.test.ts</td><td>static · dynamic</td><td><span class="badge ok">in sync</span></td></tr>
+          <tr><td>R3</td><td class="name">Scheduler</td><td>src/scheduler.ts</td><td>test/scheduler.test.ts</td><td>static · dynamic</td><td><span class="badge ok">in sync</span></td></tr>
+          <tr><td>R1</td><td class="name">MoistureReading</td><td>src/moisture-reading.ts</td><td class="missing">interface, no test</td><td>static</td><td><span class="badge ok">in sync</span></td></tr>
+          <tr class="flag"><td>R7</td><td class="name">WeatherForecast</td><td class="missing">missing</td><td class="missing">missing</td><td>static · dynamic</td><td><span class="badge bad">no code</span></td></tr>
+          <tr class="flag"><td>R7</td><td class="name">ForecastReading</td><td class="missing">missing</td><td class="missing">interface, no test</td><td>static</td><td><span class="badge bad">no code</span></td></tr>
+          <tr><td class="missing">none</td><td class="name" style="color:var(--muted)">no element</td><td style="color:var(--warn)">src/legacy-timer.ts</td><td class="missing">none</td><td class="missing">none</td><td><span class="badge warn">orphan</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="summary">
+      <div class="card"><span class="label">Topology</span><span style="font-size:13px">1 diagram · 4 nodes · approved Nov 5</span><span style="font-size:12px;color:var(--ok)">no change in R7</span></div>
+      <div class="card warn"><span class="label">Static</span><span style="font-size:13px">1 diagram · 7 elements · approved today</span><span style="font-size:12px;color:var(--warn)">2 new, 1 modified, 1 orphan file</span></div>
+      <div class="card proposed"><span class="label">Dynamic</span><span style="font-size:13px">3 sequences · 1 approved today</span><span style="font-size:12px;color:var(--proposed)">"skip watering on rain" has no test yet</span></div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="drift">
+      <div class="top"><span class="label">Drift report</span><span class="ts">check_drift · 0.3s</span></div>
+      <div class="ditem"><span class="n bad">2</span><span>elements with no code: WeatherForecast, ForecastReading</span></div>
+      <div class="ditem"><span class="n warn">1</span><span>stale element: WateringController changed after its code was generated</span></div>
+      <div class="ditem"><span class="n warn">1</span><span>orphan file: src/legacy-timer.ts has no element</span></div>
+      <div class="ditem"><span class="n proposed">1</span><span>sequence without a test: skip watering on rain</span></div>
+      <div class="hint">The same report reaches Kiro before every prompt through the drift hook, and as the <b style="font-family:var(--mono);color:#cfd5e3">check_drift</b> MCP tool when it works on its own.</div>
+      <div class="actions">
+        <button class="primary">Let Kiro fix all 4</button>
+        <button class="ghost">Copy report</button>
+      </div>
+    </div>
+
+    <div class="plan">
+      <span class="label">What Kiro will do</span>
+      <div class="steps">
+        <span><b>1</b> Generate src and test for the 2 new elements, from their element block and R7.</span>
+        <span><b>2</b> Update WateringController and its 2 tests for the skip rule. Unchanged elements are not touched.</span>
+        <span><b>3</b> Ask you about legacy-timer.ts: add it to the architecture, or delete it.</span>
+        <span><b>4</b> Write a test from the "skip watering on rain" sequence, one step per message.</span>
+        <span><b>5</b> Rewrite the 4 rows in trace.json with the new hashes.</span>
+      </div>
+    </div>
+
+    <div class="why"><b>Why ids matter here.</b> When you renamed PumpDriver to Pump Actuator last week, the id <b style="font-family:var(--mono);color:#cfd5e3">pump-driver</b> stayed. Its row did not go stale and no code was regenerated.</div>
+  </aside>
+</main>
+</body>
+</html>
