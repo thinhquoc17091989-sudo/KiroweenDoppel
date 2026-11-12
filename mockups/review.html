@@ -21,6 +21,13 @@
   .tabs { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; }
   .tabs button { font: 600 12px var(--sans); padding: 7px 14px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; min-height: 32px; }
   .tabs button.on { background: var(--accent); color: var(--accent-ink); }
+  .filerow { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; background: var(--panel); }
+  .filerow .label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-right: 4px; }
+  .chip { font: 600 12px var(--sans); padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: #cfd5e3; cursor: pointer; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+  .chip.on { background: #2a2416; border-color: var(--accent); color: #ffcf9e; }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+  .chip.changed .dot { background: var(--warn); }
+  .chip[disabled] { opacity: .45; cursor: not-allowed; }
   button.ghost { font: 600 12px var(--sans); padding: 9px 12px; background: transparent; color: #cfd5e3; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; min-height: 36px; }
   button.primary { font: 600 12px var(--sans); padding: 9px 14px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; min-height: 36px; }
   main { display: flex; flex-wrap: wrap; min-height: calc(100vh - 56px); }
@@ -79,14 +86,24 @@
   <span class="pill">plant-watering</span>
   <span class="ctx">change for <b>R7 skip watering when rain is forecast</b></span>
   <span class="spacer"></span>
-  <div class="tabs" id="tabs">
-    <button data-view="topology">Topology</button>
-    <button data-view="static" class="on">Static · 3 changes</button>
-    <button data-view="dynamic">Dynamic · 1 sequence</button>
+  <div class="tabs" id="cattabs">
+    <button data-cat="static" class="on">Static · 3 changes</button>
+    <button data-cat="dynamic">Dynamic · 1 sequence</button>
   </div>
   <button class="ghost">Ask Kiro again</button>
   <button class="primary">Approve change set</button>
 </header>
+<div class="filerow" id="filerow-static">
+  <span class="label">Static views</span>
+  <button class="chip" data-view="topology">topology.puml <span class="dot"></span></button>
+  <button class="chip on changed" data-view="static">block-watering.puml <span class="dot"></span></button>
+  <button class="chip" disabled title="future: a refined view, e.g. inside WateringController">+ refine a block…</button>
+</div>
+<div class="filerow" id="filerow-dynamic" style="display:none">
+  <span class="label">Dynamic views</span>
+  <button class="chip on changed" data-view="dynamic">skip-watering-on-rain.seq.puml <span class="dot"></span></button>
+  <button class="chip" disabled title="existing, unaffected by R7">water-on-schedule.seq.puml <span class="dot"></span></button>
+</div>
 <main>
   <div class="canvasCol">
     <div class="statusbar">
@@ -98,7 +115,7 @@
     </div>
     <div class="canvasWrap">
 
-      <div class="view" id="view-topology"><div class="empty">Topology: no change proposed for R7 — the forecast arrives over the existing network link.</div></div>
+      <div class="view" id="view-topology"><div class="empty">topology.puml: no change proposed for R7 — the forecast arrives over the existing network link.</div></div>
 
       <div class="view on" id="view-static">
         <svg width="119" height="8" viewBox="0 0 119 8" style="position:absolute;left:244px;top:148px" preserveAspectRatio="none"><defs><marker id="a1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M0,4 L115,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#a1)"/></svg>
@@ -184,9 +201,9 @@
       <div class="actions"><button class="accept">Accept</button><button>Edit note</button><button class="reject">Reject</button></div>
     </div>
 
-    <h2 style="margin-top:6px">Other views in this change</h2>
-    <div class="otherview"><span><b>Dynamic</b> · sequence "skip watering on rain"<br><span style="color:var(--muted)">Scheduler, WateringController, WeatherForecast, PumpDriver</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('dynamic')">Open</button></div>
-    <div class="otherview"><span><b>Topology</b> · no change proposed<br><span style="color:var(--muted)">forecast comes over the existing network link</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('topology')">Open</button></div>
+    <h2 style="margin-top:6px">Other files in this change</h2>
+    <div class="otherview"><span><b>Dynamic</b> · skip-watering-on-rain.seq.puml<br><span style="color:var(--muted)">Scheduler, WateringController, WeatherForecast, PumpDriver</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('dynamic')">Open</button></div>
+    <div class="otherview"><span><b>Static</b> · topology.puml · no change proposed<br><span style="color:var(--muted)">forecast comes over the existing network link</span></span><button class="ghost" style="padding:6px 10px;min-height:32px" onclick="showView('topology')">Open</button></div>
 
     <h2 style="margin-top:6px">PlantUML delta <span style="color:var(--accent);text-transform:none;letter-spacing:0;font-weight:600">live</span></h2>
     <pre class="diff"><span class="add">+ ' id: weather-forecast
@@ -202,12 +219,29 @@
   </aside>
 </main>
 <script>
+  // category: which top-level tab (static vs dynamic) and which filerow is visible.
+  // view: which .puml file's diagram is shown in the canvas. topology and static (block-watering)
+  // are both files under the static category; dynamic has its own file row.
+  const viewToCat = { topology: 'static', static: 'static', dynamic: 'dynamic' };
+
   function showView(name) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
-    document.getElementById('view-' + name).classList.add('on');
-    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === name));
+    const cat = viewToCat[name];
+    showCategory(cat, name);
   }
-  document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+
+  function showCategory(cat, preferView) {
+    document.querySelectorAll('#cattabs button').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
+    document.getElementById('filerow-static').style.display = cat === 'static' ? 'flex' : 'none';
+    document.getElementById('filerow-dynamic').style.display = cat === 'dynamic' ? 'flex' : 'none';
+    const row = document.getElementById('filerow-' + cat);
+    const view = preferView || row.querySelector('.chip.on')?.dataset.view || row.querySelector('.chip:not([disabled])').dataset.view;
+    row.querySelectorAll('.chip[data-view]').forEach(c => c.classList.toggle('on', c.dataset.view === view));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+    document.getElementById('view-' + view).classList.add('on');
+  }
+
+  document.querySelectorAll('#cattabs button').forEach(b => b.addEventListener('click', () => showCategory(b.dataset.cat)));
+  document.querySelectorAll('.filerow .chip[data-view]').forEach(c => c.addEventListener('click', () => showView(c.dataset.view)));
 </script>
 </body>
 </html>

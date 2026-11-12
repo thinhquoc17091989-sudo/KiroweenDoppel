@@ -16,8 +16,9 @@
 
 ## Week 3, Nov 24 to 30: MCP, second sample, polish
 - [ ] 10. (K, C reviews) drift-mcp server with `check_drift` and `list_trace`; register in `.kiro/settings/mcp.json`; hook calls it (R6)
-- [ ] 11a. (C) Add `status: 'modified'` to src/core/model.ts and wire it through review.ts, layout.ts, render.ts
 - [ ] 11. (K) Second sample system `samples/library-lending` to show versatility
+- [ ] 11a. (C) Add `status: 'modified'` to src/core/model.ts and wire it through review.ts, layout.ts, render.ts
+- [ ] 11b. (C) Multi-file architecture: a file picker inside Static, one element id resolvable across files, layout merge aware of which file an element came from
 - [ ] 12. (C) UI polish, dark theme, GitHub Pages deploy
 - [ ] 13. (K) README: Kiro usage write-up with one sentence per feature and what it changed
 
