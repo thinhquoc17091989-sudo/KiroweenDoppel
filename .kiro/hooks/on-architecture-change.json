@@ -6,10 +6,10 @@
       "description": "When the agent saves an approved architecture file, generate or update code, tests and trace links for the changed elements only, then run the drift check.",
       "enabled": true,
       "trigger": "PostFileSave",
-      "matcher": "architecture/.*\.puml$",
+      "matcher": "architecture/.*\\.puml$",
       "action": {
         "type": "agent",
-        "prompt": "An approved architecture file under architecture/ changed. Read .kiro/steering/architecture.md and the changed file. For each approved element whose block changed or is new, generate or update src/<element-id>.ts and test/<element-id>.test.ts, then add or update its row in trace.json with the element id, code path, test path, requirement ids, task number and the hash of the element block. Do not touch unchanged elements. Then call the check_drift MCP tool and fix any drift it reports."
+        "prompt": "An approved architecture file under architecture/ changed. Read .kiro/steering/architecture.md and the changed file. For each approved element whose block changed or is new, generate or update src/<element-id>.ts and test/<element-id>.test.ts. Do not touch unchanged elements. After writing each element's files, run `node mcp/update-trace.mjs <element-id>` to record it in trace.json -- never hand-write or hand-edit a row yourself, its hash has to come from that script's own hashElement(), not a guess. Then run `node mcp/check-drift.mjs` and fix anything it reports."
       }
     }
   ]

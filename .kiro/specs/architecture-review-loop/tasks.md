@@ -11,7 +11,8 @@
 - [x] 5. (C) Review UI: SVG diagram, dashed vs solid, drag to position, `layout.json` sidecar (R1)
 - [x] 6. (C) Accept, rename, reject (R2); approve writes `architecture/*.puml` via File System Access API (R3.1)
 - [x] 7. (C) Trace module, `trace.json`, stale detection by element hash (R5)
-- [ ] 8. (K) Hook: on architecture change, generate one code file and one test file per changed element and update trace rows (R4). Run on the plant-watering sample.
+- [x] 8a. (K, Sonnet) Generation mechanism verified manually on the plant-watering sample: a real approved architecture/plant-watering.puml, 5 real generated src/test files (type-checked, all pass), trace.json recorded via update-trace.mjs, drift clean. Proved the actual demo moment too: renaming an element's name in the architecture file made check-drift.mjs report it stale; restoring made it clean again.
+- [ ] 8b. (U, to try interactively) The live PostFileSave hook itself -- Kiro editing architecture/*.puml inside a real IDE/CLI session, not this manual run -- is still unverified; see the hook JSON bug fixed in this same pass (task 8a's work also caught and fixed invalid JSON in on-architecture-change.json: `\.` is not a legal JSON escape, so the file would not have loaded at all before this fix)
 - [ ] 9. (C) Trace table in UI (R5.1)
 
 ## Week 3, Nov 24 to 30: MCP, second sample, polish

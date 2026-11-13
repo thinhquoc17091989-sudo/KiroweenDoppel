@@ -1,0 +1,46 @@
+{
+  "moisture-reading": {
+    "id": "moisture-reading",
+    "req": [],
+    "codePath": "src/moisture-reading.ts",
+    "testPath": "test/moisture-reading.test.ts",
+    "hash": "008811ce"
+  },
+  "moisture-sensor": {
+    "id": "moisture-sensor",
+    "req": [
+      "R1"
+    ],
+    "codePath": "src/moisture-sensor.ts",
+    "testPath": "test/moisture-sensor.test.ts",
+    "hash": "9ebc40a9"
+  },
+  "pump-driver": {
+    "id": "pump-driver",
+    "req": [
+      "R2"
+    ],
+    "codePath": "src/pump-driver.ts",
+    "testPath": "test/pump-driver.test.ts",
+    "hash": "6ab2d39e"
+  },
+  "scheduler": {
+    "id": "scheduler",
+    "req": [
+      "R3"
+    ],
+    "codePath": "src/scheduler.ts",
+    "testPath": "test/scheduler.test.ts",
+    "hash": "6d453dda"
+  },
+  "watering-controller": {
+    "id": "watering-controller",
+    "req": [
+      "R1",
+      "R2"
+    ],
+    "codePath": "src/watering-controller.ts",
+    "testPath": "test/watering-controller.test.ts",
+    "hash": "b353345e"
+  }
+}

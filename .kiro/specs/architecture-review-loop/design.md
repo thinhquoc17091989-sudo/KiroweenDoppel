@@ -181,3 +181,28 @@ failure). Keep this in mind for any other `.mjs` script here that imports `.ts` 
 Still task 10b, not yet built: wrapping this same logic as a real MCP tool
 (`check_drift`, `list_trace`) registered in `.kiro/settings/mcp.json`, so Kiro can call it
 directly instead of only reading it secondhand through the prompt-submit hook's stdout.
+
+## Generation mechanism verified end to end (2026-11-13)
+Before trusting the hook to work, ran its exact job by hand once: a real
+`architecture/plant-watering.puml` written by the actual parser/printer (not hand-typed),
+Kiro (claude-sonnet-5.5) generating `src/*.ts` and `test/*.test.ts` for all 5 elements —
+4 components get a class and a vitest test, the one interface element gets a TypeScript
+`interface` and no test, matching the convention. Type-checked clean, all generated tests
+pass for real, not stubs. `mcp/update-trace.mjs` recorded all 5 rows (never hand-written —
+see its own doc comment for why that matters). `mcp/check-drift.mjs` then reported
+everything in sync. Renaming one element's name (not its id) in the architecture file made
+the checker report it stale immediately, restoring the name made it clean again — the exact
+"rename, watch it go stale, watch it get fixed" moment the demo is built around, proven to
+work mechanically, not just described.
+
+Caught in the same pass: `on-architecture-change.json`'s `matcher` field was invalid JSON
+(`"architecture/.*\.puml$"` — `\.` is not a legal JSON escape, only `\\.` is), meaning the
+hook file could never have loaded at all. Fixed, and `test/hooks.test.ts` now parses every
+`.kiro/hooks/*.json` file and checks its shape, so this class of silent breakage cannot
+recur unnoticed.
+
+What this does NOT yet prove: that the real `PostFileSave` trigger fires this generation
+automatically inside a live Kiro session when a person (or Kiro itself) edits an approved
+architecture file. That mechanism is still task 8b, to try interactively — everything it
+would call (generation, `update-trace.mjs`, `check-drift.mjs`) is now known to work; only
+the trigger itself is unverified.
