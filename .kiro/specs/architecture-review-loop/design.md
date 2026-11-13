@@ -206,3 +206,26 @@ automatically inside a live Kiro session when a person (or Kiro itself) edits an
 architecture file. That mechanism is still task 8b, to try interactively — everything it
 would call (generation, `update-trace.mjs`, `check-drift.mjs`) is now known to work; only
 the trigger itself is unverified.
+
+## Dev console (2026-11-13, tooling, not part of the Doppel product)
+`dev/dev-server.mjs` + `dev/console.html`, launched by `dev-console.bat`: a small local
+server (127.0.0.1 only) behind a one-page UI — type a task description, pick a model,
+click Run, see the architecture files, the trace table and any orphan rows update. Built
+because iterating entirely through the command line was slow for fast visual feedback
+during development. The shipped review page (`index.html`) never calls this; it exists for
+developing Doppel, not for using it, and should not be confused with the product's own UI
+in the submission write-up.
+
+`/api/run` spawns Kiro CLI the same way every manual call in this project has (fs_read and
+fs_write trust only, no shell trust — a broader grant was denied by this environment's own
+sandbox once already) and then has to work out which `src/<id>.ts` files the run actually
+touched, since Kiro is not trusted to call `update-trace.mjs` itself here. The first version
+of that check compared file mtimes against the run's start time and genuinely missed a real
+edit during testing: Kiro wrote a line into `moisture-sensor.ts`, its own text response
+claimed it had not, and the file's mtime did not read back later than the run start either
+on this Windows/Node combination — two independent signals (the agent's self-report AND the
+mtime check) agreed, and both were wrong, confirmed by `git diff` against the last commit.
+Fixed by comparing file CONTENT before and after instead of a timestamp — no precision to
+get wrong, a byte-identical file is provably untouched. Verified afterward on all three
+paths: a real edit correctly appears in `synced`, a no-op task correctly reports nothing,
+and drift stays accurate either way.

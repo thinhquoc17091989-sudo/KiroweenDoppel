@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel dev console</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342; --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --ok:#9fe0b8; --ok-bg:#173a2a; --warn:#ffcf7a; --warn-bg:#3d2e12; --bad:#f0a0a0; --bad-bg:#3d1a1a;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  header b { color: var(--accent); font-size: 17px; }
+  header span.note { font-size: 12px; color: var(--muted); }
+  main { display: grid; grid-template-columns: 420px 1fr; gap: 0; min-height: calc(100vh - 54px); }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+
+  .col { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
+  .colLeft { border-right: 1px solid var(--line); }
+  h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 4px 0; }
+
+  label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+  textarea { width: 100%; min-height: 110px; font: 13.5px/1.5 var(--sans); background: var(--panel); color: #e6e9f0; border: 1px solid var(--line); border-radius: 8px; padding: 10px; resize: vertical; }
+  select, button { font: 600 13px var(--sans); border-radius: 7px; cursor: pointer; }
+  select { background: var(--panel); color: #cfd5e3; border: 1px solid var(--line); padding: 8px 10px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border: 0; padding: 10px 16px; min-height: 40px; }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  button.ghost { background: transparent; color: #cfd5e3; border: 1px solid var(--line); padding: 10px 14px; min-height: 40px; }
+
+  .status { font-size: 12.5px; color: var(--muted); min-height: 18px; }
+  .status.busy { color: var(--accent); }
+
+  pre { margin: 0; font: 12px/1.5 var(--mono); background: #12151c; border: 1px solid var(--line); border-radius: 8px; padding: 10px; white-space: pre-wrap; word-break: break-word; overflow: auto; color: #c8d0e0; max-height: 46vh; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+  td.mono { font-family: var(--mono); font-size: 11.5px; color: #cfd5e3; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-weight: 600; font-size: 11px; }
+  .badge.in-sync { background: var(--ok-bg); color: var(--ok); }
+  .badge.stale { background: var(--warn-bg); color: var(--warn); }
+  .badge.no-code { background: var(--bad-bg); color: var(--bad); }
+  .empty { color: var(--muted); font-size: 12.5px; font-style: italic; }
+
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  details summary { padding: 8px 10px; font-size: 12.5px; cursor: pointer; color: #cfd5e3; }
+  details pre { border: 0; border-top: 1px solid var(--line); border-radius: 0 0 8px 8px; max-height: 30vh; }
+</style>
+</head>
+<body>
+<header>
+  <b>Doppel dev console</b>
+  <span class="note">developer tool for fast local iteration — not part of the shipped review page</span>
+</header>
+<main>
+  <section class="col colLeft">
+    <h2>Task</h2>
+    <label for="task">Task description (sent to Kiro CLI as a normal chat message)</label>
+    <textarea id="task" placeholder="e.g. Add a new requirement: skip watering when rain is forecast. Propose it in architecture/plant-watering.puml and generate code for any new element."></textarea>
+    <div class="row">
+      <label style="margin:0">Model</label>
+      <select id="model"></select>
+    </div>
+    <div class="row">
+      <button class="primary" id="runBtn">Run</button>
+      <button class="ghost" id="refreshBtn">Refresh (no Kiro call)</button>
+    </div>
+    <div class="status" id="status"></div>
+
+    <h2>Last Kiro output</h2>
+    <pre id="kiroOutput">(nothing yet — run a task)</pre>
+  </section>
+
+  <section class="col">
+    <h2>Architecture files <span id="archCount"></span></h2>
+    <div id="archFiles"></div>
+
+    <h2>Trace <span id="traceCount"></span></h2>
+    <table id="traceTable">
+      <thead><tr><th>Id</th><th>Req</th><th>State</th><th>Code</th><th>Test</th></tr></thead>
+      <tbody id="traceBody"></tbody>
+    </table>
+
+    <h2>Orphan trace rows</h2>
+    <div id="orphans" class="empty">none</div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function badge(state) {
+  const label = state === 'in-sync' ? 'in sync' : state === 'stale' ? 'stale' : 'no code';
+  return `<span class="badge ${state}">${label}</span>`;
+}
+
+function renderState(state) {
+  $('archCount').textContent = `· ${state.architectureFiles.length} file(s), ${state.elementCount} element(s)`;
+  $('archFiles').innerHTML = state.architectureFiles.length
+    ? state.architectureFiles.map((f) => `<details><summary>${esc(f.name)}</summary><pre>${esc(f.text)}</pre></details>`).join('')
+    : '<div class="empty">none yet</div>';
+
+  $('traceCount').textContent = `· ${state.entries.length}`;
+  $('traceBody').innerHTML = state.entries.length
+    ? state.entries.map((e) => `<tr>
+        <td class="mono">${esc(e.id)}</td>
+        <td class="mono">${esc((e.req || []).join(' '))}</td>
+        <td>${badge(e.state)}</td>
+        <td class="mono">${esc(e.codePath || '—')}</td>
+        <td class="mono">${esc(e.testPath || '—')}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">no elements yet</td></tr>';
+
+  $('orphans').innerHTML = state.orphans.length
+    ? '<table><thead><tr><th>Id</th><th>Code</th></tr></thead><tbody>' +
+      state.orphans.map((o) => `<tr><td class="mono">${esc(o.id)}</td><td class="mono">${esc(o.codePath)}</td></tr>`).join('') +
+      '</tbody></table>'
+    : '<div class="empty">none</div>';
+}
+
+async function loadState() {
+  const r = await fetch('/api/state');
+  const data = await r.json();
+  if (!data.ok) { $('status').textContent = 'error loading state: ' + data.error; return; }
+  if (!$('model').options.length) {
+    $('model').innerHTML = data.models.map((m, i) => `<option${m === 'claude-sonnet-5.5' ? ' selected' : ''}>${m}</option>`).join('');
+  }
+  renderState(data);
+}
+
+async function runTask() {
+  const task = $('task').value.trim();
+  if (!task) { $('status').textContent = 'type a task description first'; return; }
+  const model = $('model').value;
+  $('runBtn').disabled = true;
+  $('status').textContent = `running on ${model}… this can take a while, especially on a stronger model`;
+  $('status').classList.add('busy');
+  try {
+    const r = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task, model }) });
+    const data = await r.json();
+    if (!data.ok) { $('status').textContent = 'error: ' + data.error; return; }
+    $('kiroOutput').textContent = (data.kiro.output || '(no output)') +
+      (data.synced.length ? `\n\n[dev console] trace.json synced for: ${data.synced.join(', ')}` : '\n\n[dev console] nothing new synced to trace.json this run');
+    renderState(data.state);
+    $('status').textContent = data.kiro.ok ? 'done' : 'Kiro exited with an error — see output above';
+  } catch (err) {
+    $('status').textContent = 'request failed: ' + err;
+  } finally {
+    $('runBtn').disabled = false;
+    $('status').classList.remove('busy');
+  }
+}
+
+$('runBtn').addEventListener('click', runTask);
+$('refreshBtn').addEventListener('click', loadState);
+loadState();
+</script>
+</body>
+</html>
