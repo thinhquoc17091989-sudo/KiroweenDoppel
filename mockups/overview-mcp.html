@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel Workbench — MCP</title>
+<link rel="stylesheet" href="./workbench.css">
+</head>
+<body>
+<div class="titlebar">
+  <div class="dots"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></div>
+  <span class="name">Doppel — plant-watering — standalone tool (mockup)</span>
+</div>
+<header>
+  <span class="brand">Doppel</span>
+  <div class="modetabs">
+    <a href="./overview-steering.html">Steering</a>
+    <a href="./overview-hooks.html">Hooks</a>
+    <a href="./overview-mcp.html" class="on">MCP</a>
+  </div>
+  <span class="spacer"></span>
+  <button class="ghost">Open project folder…</button>
+  <button class="primary">Ask Kiro to fix drift</button>
+</header>
+
+<div class="shell">
+  <nav class="tree">
+    <div class="sect">Architecture</div>
+    <div class="tnode folder"><span class="chev">▾</span><span class="name">plant-watering</span></div>
+    <div class="tnode folder indent1"><span class="chev">▾</span><span class="name">R8 rain forecast</span><span class="tag">v2</span></div>
+    <div class="tnode indent2 open-tab"><i class="ic modified"></i><span class="name">architecture.puml</span></div>
+    <div class="tnode indent2"><i class="ic proposed"></i><span class="name">skip-on-rain.seq.puml</span><span class="tag">LLD</span></div>
+
+    <div class="sect">Verified against code</div>
+    <div class="tnode indent1"><i class="ic approved"></i><span class="name">moisture-sensor</span><span class="tag">in sync</span></div>
+    <div class="tnode indent1"><i class="ic modified"></i><span class="name">watering-controller</span><span class="tag">stale</span></div>
+    <div class="tnode indent1"><i class="ic approved"></i><span class="name">pump-driver</span><span class="tag">in sync</span></div>
+    <div class="tnode indent1"><i class="ic approved"></i><span class="name">scheduler</span><span class="tag">in sync</span></div>
+    <div class="tnode indent1"><i class="ic proposed"></i><span class="name">rain-forecast</span><span class="tag">no code</span></div>
+  </nav>
+
+  <div class="center">
+    <div class="tabbar">
+      <div class="tab on"><i class="dot approved"></i>R8/architecture.puml<span class="x">×</span></div>
+      <div class="tab"><i class="dot proposed"></i>R8/skip-on-rain.seq.puml<span class="x">×</span></div>
+      <div class="tab"><i class="dot approved"></i>trace.json<span class="x">×</span></div>
+    </div>
+    <div class="canvasWrap">
+      <div style="position:relative;width:720px;height:380px">
+        <svg width="112" height="8" viewBox="0 0 112 8" style="position:absolute;left:214px;top:96px" preserveAspectRatio="none"><defs><marker id="m1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M0,4 L108,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#m1)"/></svg>
+        <svg width="112" height="8" viewBox="0 0 112 8" style="position:absolute;left:214px;top:216px" preserveAspectRatio="none"><defs><marker id="m2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs><path d="M0,4 L108,4" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#m2)"/></svg>
+
+        <div class="node existing" style="left:56px;top:70px;width:158px;height:56px"><span><b>Scheduler</b><span class="meta">in sync</span></span></div>
+        <div class="node modified" style="left:326px;top:70px;width:170px;height:56px"><span><b>WateringController</b><span class="meta" style="color:var(--modified)">⚠ code is stale</span></span></div>
+        <div class="node existing" style="left:56px;top:190px;width:158px;height:56px"><span><b>MoistureSensor</b><span class="meta">in sync</span></span></div>
+        <div class="node proposed" style="left:326px;top:190px;width:170px;height:56px"><span><b>RainForecast</b><span class="meta" style="color:var(--bad)">✕ no code yet</span></span></div>
+        <div class="note" style="left:536px;top:92px;width:156px">The MCP tool flags these, in Kiro's own context, before it writes anything else.</div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span><b>check_drift</b> ran 0.3s ago</span><span>·</span>
+      <span style="color:var(--warn)">1 stale</span><span>·</span>
+      <span style="color:var(--bad)">1 with no code</span><span>·</span>
+      <span>3 in sync</span>
+    </div>
+  </div>
+
+  <aside class="focus">
+    <h1>MCP</h1>
+    <div class="card accent">
+      <div class="t">What MCP is</div>
+      <div class="d">An open standard for giving an agent tools it can call. Kiro calls an MCP tool the same way it calls read-file or write-file — so a tool you build becomes part of how Kiro thinks, not something a human runs afterwards and pastes in.</div>
+    </div>
+
+    <h2>Doppel's own server</h2>
+    <div class="card">
+      <div class="t">check_drift <span class="pill warn">2 findings</span></div>
+      <div class="d">Parses every architecture file, hashes each element, compares against trace.json. Returns what has no code, what went stale, and what code exists with no element behind it.</div>
+    </div>
+    <div class="card">
+      <div class="t">list_trace <span class="pill ok">5 rows</span></div>
+      <div class="d">Requirement → element → code → test, so Kiro can answer "what implements R8" without guessing.</div>
+    </div>
+
+    <h2>Last result</h2>
+    <table class="mcp">
+      <thead><tr><th>Element</th><th>Code</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">moisture-sensor</td><td class="mono">src/moisture-sensor.ts</td><td><span class="pill ok">in sync</span></td></tr>
+        <tr><td class="mono">watering-controller</td><td class="mono">src/watering-controller.ts</td><td><span class="pill warn">stale</span></td></tr>
+        <tr><td class="mono">pump-driver</td><td class="mono">src/pump-driver.ts</td><td><span class="pill ok">in sync</span></td></tr>
+        <tr><td class="mono">scheduler</td><td class="mono">src/scheduler.ts</td><td><span class="pill ok">in sync</span></td></tr>
+        <tr><td class="mono">rain-forecast</td><td class="mono" style="color:var(--bad)">missing</td><td><span class="pill bad">no code</span></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Registering it</h2>
+    <pre class="code">// .kiro/settings/mcp.json
+{
+  "mcpServers": {
+    "doppel-drift": {
+      "command": "node",
+      "args": ["mcp/server.mjs"],
+      "autoApprove": ["check_drift",
+                      "list_trace"]
+    }
+  }
+}</pre>
+
+    <h2>Build your own, or reuse one?</h2>
+    <div class="decision"><b>Build your own here.</b> Last year's grand prize used Context7, a public server for live library docs — useful, but generic. A server that checks <em>your</em> design against <em>your</em> code is the thing a judge remembers, and it is the one tool that makes "keeps it honest" literally true rather than a slogan.</div>
+
+    <h2>Status</h2>
+    <div class="card">
+      <div class="t">Built: the checker</div>
+      <div class="d"><span style="font-family:var(--mono)">mcp/check-drift.mjs</span> works today and is what the prompt hook calls.</div>
+    </div>
+    <div class="card">
+      <div class="t">Not built: the server wrapper <span class="pill bad">task 10b</span></div>
+      <div class="d">Exposing that same logic over MCP so Kiro calls it directly, instead of reading it secondhand from a hook's output.</div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel Workbench — Hooks</title>
+<link rel="stylesheet" href="./workbench.css">
+</head>
+<body>
+<div class="titlebar">
+  <div class="dots"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></div>
+  <span class="name">Doppel — plant-watering — standalone tool (mockup)</span>
+</div>
+<header>
+  <span class="brand">Doppel</span>
+  <div class="modetabs">
+    <a href="./overview-steering.html">Steering</a>
+    <a href="./overview-hooks.html" class="on">Hooks</a>
+    <a href="./overview-mcp.html">MCP</a>
+  </div>
+  <span class="spacer"></span>
+  <button class="ghost">Open project folder…</button>
+  <button class="primary">Write &amp; trigger Kiro</button>
+</header>
+
+<div class="shell">
+  <nav class="tree">
+    <div class="sect">Architecture</div>
+    <div class="tnode folder"><span class="chev">▾</span><span class="name">plant-watering</span></div>
+    <div class="tnode folder indent1"><span class="chev">▸</span><span class="name">baseline</span><span class="tag">v1</span></div>
+    <div class="tnode folder indent1"><span class="chev">▾</span><span class="name">R8 rain forecast</span><span class="tag">v2</span></div>
+    <div class="tnode indent2 open-tab"><i class="ic proposed"></i><span class="name">architecture.puml</span><span class="tag">writing…</span></div>
+
+    <div class="sect">Low-level design (generated)</div>
+    <div class="tnode indent1"><i class="ic proposed"></i><span class="name">skip-on-rain.seq.puml</span><span class="tag">new</span></div>
+    <div class="tnode indent1"><i class="ic proposed"></i><span class="name">controller.state.puml</span><span class="tag">new</span></div>
+    <div class="tnode indent1"><i class="ic proposed"></i><span class="name">decision.activity.puml</span><span class="tag">new</span></div>
+
+    <div class="sect">Generated code</div>
+    <div class="tnode indent1"><i class="ic modified"></i><span class="name">src/watering-controller.ts</span></div>
+    <div class="tnode indent1"><i class="ic proposed"></i><span class="name">src/rain-forecast.ts</span></div>
+    <div class="tnode indent1"><i class="ic proposed"></i><span class="name">test/rain-forecast.test.ts</span></div>
+  </nav>
+
+  <div class="center">
+    <div class="tabbar">
+      <div class="tab on"><i class="dot proposed"></i>R8/architecture.puml<span class="x">×</span></div>
+      <div class="tab"><i class="dot proposed"></i>R8/decision.activity.puml<span class="x">×</span></div>
+      <div class="tab"><i class="dot approved"></i>.kiro/hooks/on-architecture-change.json<span class="x">×</span></div>
+    </div>
+    <div class="canvasWrap">
+      <div style="position:relative;width:720px;height:380px">
+        <!-- activity-style low level design, the thing generated alongside the code -->
+        <svg width="8" height="46" viewBox="0 0 8 46" style="position:absolute;left:236px;top:62px" preserveAspectRatio="none"><defs><marker id="h1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M4,0 L4,42" stroke="#4a4f5c" stroke-width="2" marker-end="url(#h1)"/></svg>
+        <svg width="8" height="46" viewBox="0 0 8 46" style="position:absolute;left:236px;top:164px" preserveAspectRatio="none"><defs><marker id="h2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs><path d="M4,0 L4,42" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#h2)"/></svg>
+        <svg width="150" height="8" viewBox="0 0 150 8" style="position:absolute;left:310px;top:236px" preserveAspectRatio="none"><defs><marker id="h3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs><path d="M0,4 L146,4" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#h3)"/></svg>
+        <svg width="8" height="46" viewBox="0 0 8 46" style="position:absolute;left:236px;top:266px" preserveAspectRatio="none"><defs><marker id="h4" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M4,0 L4,42" stroke="#4a4f5c" stroke-width="2" marker-end="url(#h4)"/></svg>
+
+        <div class="node existing" style="left:170px;top:30px;width:132px;height:32px;border-radius:16px"><span><b>start</b></span></div>
+        <div class="node existing" style="left:162px;top:108px;width:148px;height:56px"><span><b>Check moisture</b><span class="meta">action · R1</span></span></div>
+        <div class="node proposed dec" style="left:162px;top:210px;width:148px;height:56px"><span><b>Rain forecast?</b><span class="meta" style="color:var(--proposed)">decision · R8</span></span></div>
+        <div class="node proposed" style="left:460px;top:210px;width:150px;height:56px"><span><b>Skip and log</b><span class="meta" style="color:var(--proposed)">action · R8</span></span></div>
+        <div class="node existing" style="left:170px;top:312px;width:132px;height:32px;border-radius:16px"><span><b>Run pump</b></span></div>
+        <div class="lbl" style="left:318px;top:214px;width:60px;color:#7a4bd6">yes</div>
+        <div class="lbl" style="left:244px;top:278px;width:50px">no</div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span>viewing <b>decision.activity.puml</b> — low-level design, generated with the code</span><span>·</span>
+      <span>hook fired 2s ago</span>
+    </div>
+  </div>
+
+  <aside class="focus">
+    <h1>Hooks</h1>
+    <div class="card accent">
+      <div class="t">What a hook is</div>
+      <div class="d">A rule that makes Kiro act on an event instead of waiting to be asked. Doppel's whole "keeps it honest" promise rests on one: change the architecture, and the code follows without anyone remembering to ask.</div>
+    </div>
+
+    <h2>What happens when you press Write &amp; trigger</h2>
+    <div class="flow">
+      <div class="flowstep arm"><div class="num">1</div><div class="body"><b>Doppel writes the file</b><div class="d">Approved elements become architecture/*.puml, positions go to layout.json. Plain text, straight into your repo.</div></div></div>
+      <div class="flowline"></div>
+      <div class="flowstep arm"><div class="num">2</div><div class="body"><b>The hook fires</b><div class="d">PostFileSave, matching architecture/.*\.puml$ — Kiro notices the save itself.</div></div></div>
+      <div class="flowline"></div>
+      <div class="flowstep arm"><div class="num">3</div><div class="body"><b>Kiro generates per element</b><div class="d">src/&lt;id&gt;.ts and test/&lt;id&gt;.test.ts for anything new or changed. Untouched elements are left alone.</div></div></div>
+      <div class="flowline"></div>
+      <div class="flowstep arm"><div class="num">4</div><div class="body"><b>Low-level design too</b><div class="d">The sequence, state and activity diagrams for that feature are written beside the code, so the design you review is the design that shipped.</div></div></div>
+      <div class="flowline"></div>
+      <div class="flowstep"><div class="num">5</div><div class="body"><b>Trace is recorded</b><div class="d">update-trace.mjs stores each element's hash. Never hand-written — a guessed hash would make drift lie forever.</div></div></div>
+      <div class="flowline"></div>
+      <div class="flowstep"><div class="num">6</div><div class="body"><b>Drift is checked</b><div class="d">Straight into the MCP tool on the next tab.</div></div></div>
+    </div>
+
+    <h2>The hook itself</h2>
+    <pre class="code">{
+  "version": "v1",
+  "hooks": [{
+    "name": "On architecture change",
+    "trigger": "PostFileSave",
+    "matcher": "architecture/.*\\.puml$",
+    "action": {
+      "type": "agent",
+      "prompt": "…generate code and
+        low-level design for each
+        changed element, then run
+        update-trace.mjs"
+    }
+  }]
+}</pre>
+
+    <h2>The catch, stated plainly</h2>
+    <div class="decision">File hooks fire on changes <b>the agent</b> makes, not on a file a tool wrote from outside. That is why Doppel needs its own trigger (the button above) rather than relying on the save alone — and why a second hook runs the drift check on every prompt as a safety net.</div>
+  </aside>
+</div>
+</body>
+</html>

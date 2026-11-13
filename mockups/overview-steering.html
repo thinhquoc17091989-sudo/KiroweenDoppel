@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel Workbench — Steering</title>
+<link rel="stylesheet" href="./workbench.css">
+</head>
+<body>
+<div class="titlebar">
+  <div class="dots"><i class="dot r"></i><i class="dot y"></i><i class="dot g"></i></div>
+  <span class="name">Doppel — plant-watering — standalone tool (mockup)</span>
+</div>
+<header>
+  <span class="brand">Doppel</span>
+  <div class="modetabs">
+    <a href="./overview-steering.html" class="on">Steering</a>
+    <a href="./overview-hooks.html">Hooks</a>
+    <a href="./overview-mcp.html">MCP</a>
+  </div>
+  <span class="spacer"></span>
+  <button class="ghost">Open project folder…</button>
+  <button class="primary">Write &amp; trigger Kiro</button>
+</header>
+
+<div class="shell">
+  <nav class="tree">
+    <div class="sect">Architecture</div>
+    <div class="tnode folder"><span class="chev">▾</span><span class="name">plant-watering</span></div>
+
+    <div class="tnode folder indent1"><span class="chev">▾</span><span class="name">baseline</span><span class="tag">v1</span></div>
+    <div class="tnode indent2"><i class="ic approved"></i><span class="name">architecture.puml</span><span class="tag">Nov 5</span></div>
+    <div class="tnode indent2"><i class="ic approved"></i><span class="name">topology.puml</span><span class="tag">Nov 5</span></div>
+
+    <div class="tnode folder indent1"><span class="chev">▾</span><span class="name">R8 rain forecast</span><span class="tag">v2</span></div>
+    <div class="tnode indent2 open-tab"><i class="ic proposed"></i><span class="name">architecture.puml</span><span class="tag">now</span></div>
+    <div class="tnode indent2"><i class="ic proposed"></i><span class="name">skip-on-rain.seq.puml</span><span class="tag">LLD</span></div>
+    <div class="tnode indent2"><i class="ic proposed"></i><span class="name">controller.state.puml</span><span class="tag">LLD</span></div>
+    <div class="tnode indent2"><i class="ic proposed"></i><span class="name">decision.activity.puml</span><span class="tag">LLD</span></div>
+
+    <div class="tnode folder indent1"><span class="chev">▸</span><span class="name">R7 dynamic dialects</span><span class="tag">v1</span></div>
+
+    <div class="sect">Kiro context</div>
+    <div class="tnode indent1 open-tab"><i class="ic approved"></i><span class="name">steering/architecture.md</span></div>
+    <div class="tnode indent1"><i class="ic approved"></i><span class="name">steering/product.md</span></div>
+    <div class="tnode indent1"><i class="ic approved"></i><span class="name">steering/tech.md</span></div>
+  </nav>
+
+  <div class="center">
+    <div class="tabbar">
+      <div class="tab"><i class="dot approved"></i>baseline/architecture.puml<span class="x">×</span></div>
+      <div class="tab on"><i class="dot proposed"></i>R8/architecture.puml<span class="x">×</span></div>
+      <div class="tab"><i class="dot proposed"></i>R8/skip-on-rain.seq.puml<span class="x">×</span></div>
+      <div class="tab"><i class="dot approved"></i>steering/architecture.md<span class="x">×</span></div>
+    </div>
+    <div class="canvasWrap">
+      <div style="position:relative;width:720px;height:380px">
+        <svg width="112" height="8" viewBox="0 0 112 8" style="position:absolute;left:214px;top:96px" preserveAspectRatio="none"><defs><marker id="s1" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#4a4f5c"/></marker></defs><path d="M0,4 L108,4" stroke="#4a4f5c" stroke-width="2" marker-end="url(#s1)"/></svg>
+        <svg width="112" height="8" viewBox="0 0 112 8" style="position:absolute;left:214px;top:216px" preserveAspectRatio="none"><defs><marker id="s2" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs><path d="M0,4 L108,4" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#s2)"/></svg>
+        <svg width="8" height="92" viewBox="0 0 8 92" style="position:absolute;left:400px;top:128px" preserveAspectRatio="none"><defs><marker id="s3" orient="auto" markerWidth="5" markerHeight="5" refX="2" refY="2" overflow="visible"><path d="M0 0 L4 2 L0 4 Z" fill="#7a4bd6"/></marker></defs><path d="M4,92 L4,4" stroke="#7a4bd6" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#s3)"/></svg>
+
+        <div class="node existing" style="left:56px;top:70px;width:158px;height:56px"><span><b>Scheduler</b><span class="meta">component · R3</span></span></div>
+        <div class="node modified" style="left:326px;top:70px;width:170px;height:56px"><span><b>WateringController</b><span class="meta">modified · R1 R2 R8</span></span></div>
+        <div class="node existing" style="left:56px;top:190px;width:158px;height:56px"><span><b>MoistureSensor</b><span class="meta">component · R1</span></span></div>
+        <div class="node proposed" style="left:326px;top:190px;width:170px;height:56px"><span><b>RainForecast</b><span class="meta" style="color:var(--proposed)">proposed · R8</span></span></div>
+
+        <div class="lbl" style="left:222px;top:74px;width:96px">triggers</div>
+        <div class="lbl" style="left:222px;top:194px;width:96px;color:#7a4bd6">asks about rain</div>
+        <div class="note" style="left:540px;top:150px;width:150px">Everything on this canvas is what Kiro reads as steering, every request.</div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span><b>R8 rain forecast</b> · v2 proposed</span><span>·</span>
+      <span>4 elements, 1 modified, 1 proposed</span><span>·</span>
+      <span>3 low-level diagrams generated</span>
+    </div>
+  </div>
+
+  <aside class="focus">
+    <h1>Steering</h1>
+    <div class="card accent">
+      <div class="t">What steering is</div>
+      <div class="d">Files Kiro loads into context automatically, on every single request, without anyone pasting or re-explaining them. It is how Kiro knows your project's rules before it writes a line.</div>
+    </div>
+
+    <h2>Doppel's steering files</h2>
+    <div class="card">
+      <div class="t">architecture.md <span class="pill ok">always</span></div>
+      <div class="d">References every approved <span style="font-family:var(--mono)">architecture/*.puml</span>. This is the one that matters: it is why Kiro proposes a <em>change to what exists</em> rather than redrawing from scratch.</div>
+    </div>
+    <div class="card">
+      <div class="t">product.md <span class="pill ok">always</span></div>
+      <div class="d">Vocabulary (element, proposal, approved, stale, drift) and the hard rules: invented sample data only, never claim real SysML, no copied code.</div>
+    </div>
+    <div class="card">
+      <div class="t">tech.md <span class="pill ok">always</span></div>
+      <div class="d">Stack and conventions, so generated code matches the project instead of the model's defaults.</div>
+    </div>
+
+    <h2>What Kiro sees right now</h2>
+    <pre class="code">---
+inclusion: always
+---
+# Approved architecture
+
+#[[file:architecture/*.puml]]
+
+- Element ids are the stable identity.
+- Code for an element goes in
+  src/&lt;element-id&gt;.ts
+- Record it with
+  node mcp/update-trace.mjs &lt;id&gt;</pre>
+
+    <h2>Format decision</h2>
+    <div class="decision"><b>PlantUML stays the source of truth</b> — not JSON, not Markdown. It is readable, it diffs cleanly in a pull request, and a person can hand-edit it. JSON is used only for <span style="font-family:var(--mono)">index.json</span> (what files exist, for this tree) and <span style="font-family:var(--mono)">trace.json</span> (element → code → test), never for the architecture itself.</div>
+  </aside>
+</div>
+</body>
+</html>

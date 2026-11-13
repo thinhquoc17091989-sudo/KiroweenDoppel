@@ -286,3 +286,37 @@ polling interval decision, pause-when-tab-hidden handling (`document.visibilityS
 a decision on what the banner does — redraw in place vs. require a click to adopt the new
 proposal (the latter is safer if the reviewer was mid-edit of the current one). Tracked as
 task 26.
+
+## Doppel Workbench: proposed direction, mocked up not built (2026-11-13)
+Three linked mockups — `mockups/overview-steering.html`, `overview-hooks.html`,
+`overview-mcp.html`, sharing `workbench.css` — show one standalone tool from three angles.
+They are a proposal for review, nothing here is implemented. What they change about the
+product as it stands today:
+
+- **Standalone tool, many architectures.** Today's review page knows one hardcoded sample.
+  The Workbench opens a project folder and shows a tree: project → feature → the files for
+  that feature, with past versions (baseline v1, R8 v2) kept so a reviewer can look back at
+  an earlier architecture instead of only the current one.
+- **Tabs.** Several files open at once — a static architecture beside its own low-level
+  diagrams, or this feature's architecture beside the baseline's, which is the "check in
+  parallel" ask generalized beyond the single compare toggle already built.
+- **Low-level design is a first-class output.** The sequence, state and activity dialects
+  stop being samples and become what Kiro generates per feature, beside the code, during
+  implementation. This is what those three parsers were actually for.
+- **Write and trigger.** One button writes the approved files and then triggers Kiro,
+  rather than relying on a file-save hook that (per the Kiro docs) only fires for changes
+  the agent itself made. The dev console already proves this shape works: a local process
+  can spawn Kiro CLI and read back the result.
+
+**Format decision, asked and answered: PlantUML stays the source of truth.** Not JSON, not
+Markdown. It is readable, it diffs cleanly in review, a person can hand-edit it, and the
+parser already handles it. JSON appears only as derived index data — `trace.json` (element
+→ code → test) and a possible per-project `index.json` so the tree can list what exists
+without parsing every file. Markdown is for steering and prose, never for the architecture
+itself. Switching the architecture to JSON would cost the entire parser and printer layer
+and buy nothing a reviewer can read in a pull request.
+
+Open before any of this gets built: whether the Workbench is an Electron-style desktop app
+or stays a browser page with File System Access (today's approach, Chromium-only but zero
+install), and whether a feature's versions are real directories or git history read through
+the tool.
