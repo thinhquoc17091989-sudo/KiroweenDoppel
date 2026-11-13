@@ -316,7 +316,35 @@ without parsing every file. Markdown is for steering and prose, never for the ar
 itself. Switching the architecture to JSON would cost the entire parser and printer layer
 and buy nothing a reviewer can read in a pull request.
 
-Open before any of this gets built: whether the Workbench is an Electron-style desktop app
-or stays a browser page with File System Access (today's approach, Chromium-only but zero
-install), and whether a feature's versions are real directories or git history read through
+Still open: whether a feature's versions are real directories or git history read through
 the tool.
+
+## Decided: local server + browser UI, not a desktop app, not a pure browser page (2026-11-13)
+The deciding capability is not file editing — a browser page edits files fine through the
+File System Access API, which today's Approve button already does. It is **starting Kiro**.
+Spawning a process is a hard browser security boundary with no workaround, and Doppel's
+write-and-trigger step depends on it.
+
+| Capability | Browser page | Desktop app | Local server + browser |
+|---|---|---|---|
+| Read/write project files | after folder picker | yes | yes, no picker |
+| Folder hierarchy | yes | yes | yes |
+| Detect that Kiro finished | polling only | file watcher | file watcher |
+| Start Kiro CLI | **no** | yes | **yes** |
+| Host the MCP server | no | yes | yes |
+| Install cost | none | build + sign per platform | one command |
+| Browser support | Chromium only | n/a | any |
+
+**Local server wins, and it is already proven here**: the dev console (`dev/api-plugin.mjs`
+plus `dev/console.ts`) is exactly this architecture — a Node process that reads and writes
+files, spawns Kiro CLI and serves a page that draws the diagrams. Electron would add build
+and code-signing work before Dec 4 and buy almost nothing over it. It is also the shape of
+Vite, Storybook and Prisma Studio, and it satisfies the drop-in requirement directly:
+`npx doppel` inside someone else's project, nothing installed.
+
+Consequence for the submission, planned for now rather than discovered late: the rules want
+a URL to a working app, and a local tool has no clickable link. So ship **both** — a static
+GitHub Pages build loading the sample data (read-only, no Kiro trigger, a judge can click it
+immediately; `npm run build` already produces exactly this) and the real local tool that
+does the full loop in the demo video. The two share all their rendering and parsing code;
+only the server-backed capabilities are absent from the hosted one.

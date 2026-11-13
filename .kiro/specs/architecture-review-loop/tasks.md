@@ -45,3 +45,7 @@
 ## Compare and auto-detect (added 2026-11-13, product UI this time, not the dev console)
 - [x] 25b. (C) "Compare with approved" toggle in the real review page: cached directory handle, loads and merges architecture/*.puml, renders beside the proposal using the same render.ts/layout.ts
 - [ ] 26. (C) Auto-detect a finished Kiro run: poll the granted directory handle for proposals.puml's last-modified time, banner on change, pause while the tab is hidden
+
+## Delivery shape (decided 2026-11-13)
+- [ ] 27. (C) `npx doppel` entry point: one command in any project folder starts the local server and opens the tool (replaces dev-console.bat's project-specific launcher)
+- [ ] 28. (C) Static GitHub Pages build for the submission's "working app URL": sample data, read-only, no Kiro trigger, same rendering code
