@@ -75,7 +75,7 @@ const arbDiagram: fc.Arbitrary<StateDiagram> = fc
       ),
     );
     // `[*]` is one token standing for two different pseudostates depending on which side
-    // of the arrow it sits on (real PlantUML's own rule, and Diagraph's too): on the left
+    // of the arrow it sits on (real PlantUML's own rule, and the prior editor's too): on the left
     // it can only mean "initial" (from), on the right only "final" (to) — parse() never
     // produces from=END or to=START from real text, so the generator should not either.
     // `[*] --> [*]` is the one case even real PlantUML treats as ambiguous and drops.

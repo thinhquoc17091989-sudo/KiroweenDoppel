@@ -63,7 +63,7 @@ These superseded an earlier version of the same two screens plus a since-dropped
 Topology is not a sibling of Static. It is a static diagram like any other, just at system/deployment scope instead of component scope. The real distinction is only:
 - **Static** (one dialect, `src/core/puml.ts`): any number of `.puml` files under `architecture/`, each one view at some scope — a topology/deployment view, a block/component view, a refined view of one block. An element id can appear in more than one static file (e.g. a block shown in the topology view and detailed in a component view); `trace.json` rows key by element id, not by file, so this is not a new concept for trace, only for the file layer above it.
 - **Dynamic** (a separate dialect, not yet in the parser): sequence/behavior files, referencing static element ids but describing scenarios, not structure.
-This mirrors RIAPS's SysArch, which keeps one project as several diagram files (e.g. a BDD per subsystem, an IBD per interface) picked from a list rather than one file — an idea only, per the origin rule in steering/product.md; no code is shared.
+This mirrors a prior in-house PlantUML editor I had worked on, which keeps one project as several diagram files (e.g. a BDD per subsystem, an IBD per interface) picked from a list rather than one file — an idea only, per the origin rule in steering/product.md; no code is shared.
 Consequence for the UI: the top-level choice is Static vs Dynamic (two categories), and *within* Static there is a file picker (a chip row), not a third tab. `architecture/*.puml` in the always-on steering glob already covers "however many static files exist," so nothing about steering or the hook changes. What does change, tracked as a new task: `architecture/` needs an index (or just a directory listing) so the review UI and `propose-mcp` know which static file an element belongs to, and multi-file layout merge (today's `mergeLayout` assumes one file's worth of elements).
 
 ## File list replaces tabs, with a status per file (2026-11-12)
@@ -76,23 +76,23 @@ This generalizes the earlier model/parser note (an element can span static files
 ## Dynamic dialects: Sequence, State Machine, Activity (2026-11-12)
 Three new parser/printer modules, matching the static dialect's shape (own file per dialect,
 `' id:` / `' req:` / `' status:` comment triplet, property-based round-trip test), layout
-ideas borrowed from Diagraph/SysArch as ideas only per steering's origin rule, no code shared:
+ideas borrowed from that prior in-house editor as ideas only per steering's origin rule, no code shared:
 
 - Shared foundation: `src/core/dsl.ts` factors the envelope-stripping and meta-comment
   pattern all three (and, going forward, the static dialect too) rely on. `src/core/rank.ts`
-  factors the longest-path DAG ranking Diagraph uses for both its block layout (left-to-right)
+  factors the longest-path DAG ranking that prior editor uses for both its block layout (left-to-right)
   and its activity/state layout (top-to-bottom), one algorithm, the caller picks the axis.
   `src/core/layout.ts`'s existing `layers()` now calls it too, a safe refactor since the
   existing property and unit tests covered the old inline version and still pass unchanged.
 - State machine (`src/core/state.ts`, `*.state.puml`): one flat machine only, no composite
-  states, no concurrency, no choice/fork/history pseudostates (Diagraph supports all of
+  states, no concurrency, no choice/fork/history pseudostates (the prior editor supports all of
   these; this slice deliberately does not, tracked as follow-up). The start/end pseudostate
   token is positional: valid only as a transition's from (meaning initial) or to (final),
   never the reverse, matching what real PlantUML state-machine text without reversed arrows
   can express. A transition directly from the initial token to the final one is genuinely
-  ambiguous even in real PlantUML and is dropped on parse, the same choice Diagraph's own
+  ambiguous even in real PlantUML and is dropped on parse, the same choice that editor's own
   importer makes. Layout: rankByLongestPath over states and transitions, rank becomes a row
-  top-to-bottom, reusing Diagraph's observation that a state machine reads downward.
+  top-to-bottom, reusing that editor's observation that a state machine reads downward.
 - Activity (`src/core/activity.ts`, `*.activity.puml`): NOT real PlantUML activity syntax,
   which chains steps implicitly and has no natural place for a stable id. This dialect
   declares action/decision nodes with an alias and connects them with explicit edges

@@ -42,7 +42,7 @@ export interface StateDiagram {
 }
 
 /** The machine's single entry and exit, both spelled `[*]` in PlantUML; which one a given
- *  `[*]` means is read off the arrow's direction (Diagraph's rule, reused as an idea only). */
+ *  `[*]` means is read off the arrow's direction (a prior in-house editor's rule, reused as an idea only). */
 export const START = 'start';
 export const END = 'end';
 
@@ -82,7 +82,7 @@ export function parse(text: string): StateDiagram {
 
   const transitions: StateTransition[] = [];
   for (const t of rawTrans) {
-    if (t.from === '[*]' && t.to === '[*]') continue; // meaningless, Diagraph skips it too
+    if (t.from === '[*]' && t.to === '[*]') continue; // meaningless; a prior in-house editor skips it too
     const from = t.from === '[*]' ? START : byAlias.get(t.from)?.id;
     const to = t.to === '[*]' ? END : byAlias.get(t.to)?.id;
     if (from && to) transitions.push({ from, to, label: t.label, proposed: t.proposed });

@@ -3,7 +3,7 @@
  * node ranks one more than the deepest thing that points into it. Shared by the static
  * dialect's left-to-right columns (src/core/layout.ts) and the state/activity dialects'
  * top-to-bottom rows — same algorithm, the renderer just picks which axis the rank maps to
- * (idea borrowed from Diagraph's block and activity auto-layout passes, as an idea only,
+ * (idea borrowed from a prior in-house editor's block and activity auto-layout passes, as an idea only,
  * per steering/product.md's origin rule — this implementation shares no code with it).
  *
  * A cycle has no fixed point under this rule (ranking it would raise every node in the

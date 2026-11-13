@@ -1,7 +1,7 @@
 # Tasks (owner: K = Kiro, C = Claude Code, U = user)
 
 ## Week 1, Nov 10 to 16: foundation
-- [ ] 1. (U) Employer OK for public repo. Resubmit Kiro credit request. Create empty public GitHub repo `doppel` with MIT license.
+- [x] 1. (U) Public GitHub repo created with an MIT license.
 - [x] 2. (C) Scaffold: Vite + TypeScript + Vitest + fast-check, README stub, `samples/plant-watering/proposals.puml`
 - [x] 3. (C) puml-subset parser and printer (R3.2)
   - [x] 3.1 Property-based round-trip test
@@ -28,7 +28,7 @@
 - [ ] 14. (U) Credits deadline Dec 1 noon PT. Record 3-minute video: open diagram, accept and rename, approve, hook generates files, rename again, trace goes stale, drift tool reports, Kiro fixes.
 - [ ] 15. (U, C drafts) Blog post and #KiroweenHackathon26 social post. Submit on Devpost by Dec 3 to keep a day of buffer.
 
-## Dynamic dialects (added 2026-11-12, referencing Diagraph/SysArch layout ideas)
+## Dynamic dialects (added 2026-11-12, referencing a prior in-house editor's layout ideas)
 - [x] 16. (C) Shared dsl.ts (envelope + id/req/status comment) and rank.ts (longest-path ranking), layout.ts's layers() refactored onto it
 - [x] 17. (C) State machine dialect: src/core/state.ts, property-based round-trip test
 - [x] 18. (C) Activity dialect: src/core/activity.ts, property-based round-trip test
