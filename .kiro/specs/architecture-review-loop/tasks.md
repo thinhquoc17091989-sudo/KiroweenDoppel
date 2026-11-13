@@ -34,3 +34,8 @@
 - [x] 20. (K, Haiku 5.5) Draft the three R7 sample files (state/activity/sequence), verified by parsing them with the real parsers (test/samples.test.ts), not by trusting the model's own report
 - [ ] 21. (C) Render each dynamic dialect in the review UI; extend the file-list sidebar to multi-dialect selection; persist layout per file
 - [ ] 22. (C) reject() on a 'modified' element: store a pre-change snapshot so reject can revert instead of delete
+
+## Shippable as a package (added 2026-11-13)
+- [ ] 23. (C) Stop hardcoding the plant-watering sample in main.ts; load whatever architecture/ and proposals.puml actually exist in the host project
+- [ ] 24. (C) scripts/setup.mjs: create architecture/, copy steering + hooks, register drift-mcp (greenfield path)
+- [ ] 25. (K) AI-driven bootstrap: Kiro proposes an initial architecture from an existing codebase via propose-mcp (brownfield path)

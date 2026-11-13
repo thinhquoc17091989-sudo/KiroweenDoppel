@@ -126,3 +126,29 @@ ideas borrowed from Diagraph/SysArch as ideas only per steering's origin rule, n
   per dialect, multi-dialect file-list integration, layout persistence per file). That is
   real, separate UI work, scoped as follow-up rather than rushed alongside the parser and
   model work above.
+
+## Shippable as a drop-in package (2026-11-13)
+The product requirement: another team copies Doppel into their own project and gets set up
+with a script or an AI call, not a manual walkthrough. Two consequences for what is already built:
+
+- `main.ts` currently hardcodes `import sampleText from '../samples/plant-watering/proposals.puml?raw'`
+  and a matching `localStorage` key. That only works inside this repo. A drop-in package needs
+  the UI to load whatever `architecture/` and `proposals.puml` actually exist in the host
+  project, with the plant-watering sample demoted to this repo's own demo content, not
+  something the shipped package depends on.
+- `.kiro/steering/architecture.md` and both hook files are already project-agnostic — they
+  reference `architecture/*.puml` generically, not plant-watering by name — so these three
+  files are already copy-paste-able into another project as they stand.
+
+Two setup paths, not mutually exclusive:
+- **Script setup** (`scripts/setup.mjs` or similar, not yet written): creates `architecture/`
+  if missing, copies the steering file and hooks into the host's `.kiro/`, registers
+  `drift-mcp` in `.kiro/settings/mcp.json`. Deterministic, no credits.
+  Fits the **greenfield** use case (empty `architecture/`, start from a proposal).
+- **AI-driven setup**: the user asks Kiro to bootstrap Doppel in an existing codebase. Kiro
+  reads the real source, proposes an initial architecture via `propose-mcp` the same way it
+  proposes a change, and the reviewer approves it like any other change set. Fits the
+  **brownfield** use case named early in this project (bringing an existing codebase under
+  Doppel rather than only starting new ones).
+Both need the portability fix above done first; neither is useful while the UI only knows
+how to load one hardcoded sample.
