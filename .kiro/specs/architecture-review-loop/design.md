@@ -342,9 +342,20 @@ and code-signing work before Dec 4 and buy almost nothing over it. It is also th
 Vite, Storybook and Prisma Studio, and it satisfies the drop-in requirement directly:
 `npx doppel` inside someone else's project, nothing installed.
 
-Consequence for the submission, planned for now rather than discovered late: the rules want
-a URL to a working app, and a local tool has no clickable link. So ship **both** — a static
-GitHub Pages build loading the sample data (read-only, no Kiro trigger, a judge can click it
-immediately; `npm run build` already produces exactly this) and the real local tool that
-does the full loop in the demo video. The two share all their rendering and parsing code;
-only the server-backed capabilities are absent from the hosted one.
+### Correction (2026-11-13): a hosted URL is NOT required, checked against the winner
+An earlier version of this section claimed the rules force a clickable app URL and that a
+local tool therefore needs a GitHub Pages build to comply. That was overstated. Checked
+against the Kiroween 2025 grand prize winner (Kiro InteractionKit): its own README states a
+webcam is required and there is **no hosted web demo** — a judge clones it, runs
+`./setup.sh` or `.\setup.bat`, then `python my_apps/Math-O-Lantern/main.py`. That won the
+top prize, so "URL to your working app" is plainly satisfiable with the repo link when
+nothing is hosted. The rules agree elsewhere: the repo must carry "instructions required
+for the project to be functional", which only matters if judges are expected to run things.
+
+What the winner actually did about friction is the part to copy: one setup script covering
+both platforms, then a single command per demo app, with nothing for a judge to work out.
+That is the real bar, and it is what `npx doppel` (task 27) should clear.
+
+So the static Pages build (task 28) drops from "needed for compliance" to optional — worth
+doing only if time is left over, because a judge who can click something forms an
+impression faster. The local-server decision above costs the submission nothing.

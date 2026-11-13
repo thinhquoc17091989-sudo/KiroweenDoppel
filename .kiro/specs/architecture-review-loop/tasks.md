@@ -47,5 +47,5 @@
 - [ ] 26. (C) Auto-detect a finished Kiro run: poll the granted directory handle for proposals.puml's last-modified time, banner on change, pause while the tab is hidden
 
 ## Delivery shape (decided 2026-11-13)
-- [ ] 27. (C) `npx doppel` entry point: one command in any project folder starts the local server and opens the tool (replaces dev-console.bat's project-specific launcher)
-- [ ] 28. (C) Static GitHub Pages build for the submission's "working app URL": sample data, read-only, no Kiro trigger, same rendering code
+- [ ] 27. (C, HIGH — this is what the 2025 winner got right) `npx doppel` entry point: one command in any project folder starts the local server and opens the tool. Match the winner's friction level: one setup step, one run command, nothing for a judge to work out
+- [ ] 28. (C, OPTIONAL — not required for compliance, see design.md correction) Static GitHub Pages build: sample data, read-only, lowers friction for a judge but the repo link is a valid "working app URL" on its own
