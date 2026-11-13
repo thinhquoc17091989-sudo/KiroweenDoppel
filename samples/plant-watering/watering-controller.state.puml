@@ -6,7 +6,7 @@ state "Idle" as Idle
 state "Watering" as Watering
 
 ' id: skipped
-' req: R7
+' req: R8
 ' status: proposed
 state "Skipped" as Skipped
 

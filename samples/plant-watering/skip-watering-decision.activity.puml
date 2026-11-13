@@ -4,12 +4,12 @@
 action "Check moisture" as CheckMoisture
 
 ' id: rain-decision
-' req: R7
+' req: R8
 ' status: proposed
 decision "Rain forecast?" as RainDecision
 
 ' id: skip-watering
-' req: R7
+' req: R8
 ' status: proposed
 action "Skip and log reason" as SkipWatering
 

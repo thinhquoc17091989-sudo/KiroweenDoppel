@@ -21,10 +21,15 @@ component "Scheduler" as Scheduler
 ' id: moisture-reading
 interface "MoistureReading" as MoistureReading
 
+' id: rain-forecast
+' req: R8
+component "RainForecast" as RainForecast
+
 MoistureSensor ..> MoistureReading : publishes
 WateringController ..> MoistureReading : reads
 WateringController ..> PumpDriver : commands
 Scheduler ..> WateringController : triggers
+WateringController ..> RainForecast : asks about rain
 
 note right of WateringController
   Decides when to water from

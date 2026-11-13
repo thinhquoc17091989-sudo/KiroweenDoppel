@@ -9,7 +9,7 @@ describe('Kiro-drafted samples parse correctly and round-trip', () => {
     const text = readFileSync('samples/plant-watering/watering-controller.state.puml', 'utf8');
     const d = parseState(text);
     expect(d.states.map((s) => s.id)).toEqual(['idle', 'watering', 'skipped']);
-    expect(d.states.find((s) => s.id === 'skipped')).toMatchObject({ status: 'proposed', req: ['R7'] });
+    expect(d.states.find((s) => s.id === 'skipped')).toMatchObject({ status: 'proposed', req: ['R8'] });
     expect(d.states.find((s) => s.id === 'idle')).toMatchObject({ status: 'approved' });
     expect(d.transitions).toHaveLength(6);
     expect(d.transitions.find((t) => t.to === 'skipped')).toMatchObject({ proposed: true, label: 'rain forecast' });
@@ -34,7 +34,7 @@ describe('Kiro-drafted samples parse correctly and round-trip', () => {
     expect(d.participants.map((p) => p.alias)).toEqual(['Scheduler', 'WateringController', 'WeatherForecast', 'PumpDriver']);
     expect(d.messages).toHaveLength(4);
     expect(d.messages.map((m) => m.id)).toEqual(['tick', 'get-forecast', 'forecast-reply', 'run-pump-msg']);
-    expect(d.messages.find((m) => m.id === 'get-forecast')).toMatchObject({ status: 'proposed', req: ['R7'] });
+    expect(d.messages.find((m) => m.id === 'get-forecast')).toMatchObject({ status: 'proposed', req: ['R8'] });
     const once = printSequence(d);
     expect(printSequence(parseSequence(once))).toBe(once);
   });

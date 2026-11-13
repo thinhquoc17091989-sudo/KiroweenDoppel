@@ -46,3 +46,9 @@ Real SysML, multi-user editing, any hosted backend.
 2. WHEN a `.activity.puml` file is parsed and printed again, THEN the parsed activity diagram SHALL equal the original. (property-based test)
 3. WHEN a `.seq.puml` file is parsed and printed again, THEN the parsed sequence diagram SHALL equal the original. (property-based test)
 4. Each dialect's primary content unit (state / action or decision / message) SHALL carry the same id/req/status triplet as a static element, so trace.json can reference it the same way.
+
+### R8 Skip watering when rain is forecast (new)
+1. WHEN the scheduler triggers watering and the rain forecast reports rain within the next 12 hours, THEN the watering controller SHALL NOT start the pump.
+2. WHEN the scheduler triggers watering and the rain forecast reports no rain within the next 12 hours, THEN the watering controller SHALL start the pump if the soil is dry.
+3. WHEN watering is skipped for rain, THEN the system SHALL record the reason as "rain forecast".
+4. WHEN the rain forecast cannot be read, THEN the watering controller SHALL water as normal and SHALL NOT skip because of missing data.

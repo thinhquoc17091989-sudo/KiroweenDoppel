@@ -11,11 +11,15 @@ describe('parse', () => {
     const m = parse(sample);
     expect(m.title).toBe('plant-watering');
     expect(m.elements.map((e) => e.id)).toEqual([
-      'moisture-sensor', 'watering-controller', 'pump-driver', 'scheduler', 'moisture-reading',
+      'moisture-sensor', 'watering-controller', 'pump-driver', 'scheduler', 'moisture-reading', 'rain-forecast',
     ]);
     expect(m.elements[1]!.req).toEqual(['R1', 'R2']);
     expect(m.elements[4]!.kind).toBe('interface');
-    expect(m.links).toHaveLength(4);
+    // No '  status:' line here, same as every other element in this file: the file itself
+    // is already a set of proposals, and main.ts's loadSample() is what marks everything
+    // 'proposed' when the app opens it, not a status comment on each individual element.
+    expect(m.elements[5]).toMatchObject({ id: 'rain-forecast', status: 'approved', req: ['R8'] });
+    expect(m.links).toHaveLength(5);
     expect(m.links.every((l) => l.proposed)).toBe(true);
     expect(m.links[2]).toEqual({ from: 'watering-controller', to: 'pump-driver', label: 'commands', proposed: true });
     expect(m.notes).toEqual([{ target: 'watering-controller', side: 'right', lines: [

@@ -229,3 +229,31 @@ Fixed by comparing file CONTENT before and after instead of a timestamp — no p
 get wrong, a byte-identical file is provably untouched. Verified afterward on all three
 paths: a real edit correctly appears in `synced`, a no-op task correctly reports nothing,
 and drift stays accurate either way.
+
+## First real feature proposed through the dev console: R8 (2026-11-13)
+Asked through the console for "skip watering when rain is forecast" as a new requirement.
+Kiro added R8 to requirements.md, added a proposed `RainForecast` component (id
+`rain-forecast`, req R8) to `samples/plant-watering/proposals.puml` with a dashed link from
+WateringController, and correctly generated no code for it — proposed, not approved, so
+nothing to generate yet, exactly the rule. It also caught something this project had
+genuinely gotten wrong: the three dynamic-dialect sample files already covering this same
+rain scenario (`watering-controller.state.puml`, `skip-watering-decision.activity.puml`,
+`skip-watering-on-rain.seq.puml`) were tagged R7, which requirements.md had since reassigned
+to a different, unrelated requirement — "Dynamic dialects," the property-based test
+requirement added when those parsers were built. Two different things both called R7.
+Retagged all three sample files (and the two test/samples.test.ts assertions that checked
+the old tag) to R8.
+
+Running the test suite was not possible from inside that session — this console grants
+Kiro fs_read/fs_write only, no shell trust (the same scoping used everywhere else in this
+project, and the same one the sandbox denied broadening earlier), so npx vitest failed with
+a permission error, which the session reported honestly rather than silently skipping.
+Running it afterward by hand found one real, expected failure: `puml.test.ts` hardcoded the
+exact original 5-element list from `proposals.puml`, which the new proposal legitimately
+extended to 6 — fixed by updating the test to the file's new content, not by reverting the
+file. That same check also caught a second-order detail worth keeping: `rain-forecast` has
+no `' status:' comment in the file (same as every other element there), so it parses as
+'approved' at the raw-text level — it only reads as 'proposed' once `main.ts`'s
+`loadSample()` applies the whole-file override that `proposals.puml` represents nothing but
+proposals in the first place. Kiro matched the file's own existing convention correctly; an
+over-specific test assertion was the thing that needed fixing, not the content.
