@@ -359,3 +359,27 @@ That is the real bar, and it is what `npx doppel` (task 27) should clear.
 So the static Pages build (task 28) drops from "needed for compliance" to optional — worth
 doing only if time is left over, because a judge who can click something forms an
 impression faster. The local-server decision above costs the submission nothing.
+
+## The MCP server, built (2026-11-13, task 10b)
+`mcp/server.mjs` exposes two tools to Kiro over stdio, using the official
+`@modelcontextprotocol/sdk`:
+- **check_drift** — elements with no code, elements gone stale, orphaned trace rows, plus
+  the instruction to fix them via `update-trace.mjs` rather than hand-writing a hash.
+- **list_trace** — requirement to element to code to test, optionally filtered by a
+  requirement id, so Kiro can answer "what implements R8" by lookup instead of guessing.
+
+It imports `src/core/trace.ts` and `src/core/puml.ts` directly, exactly as
+`mcp/check-drift.mjs` does, so the CLI and the MCP tool are one implementation with two
+front doors, never two copies that can disagree.
+
+Two things that matter and are easy to get wrong:
+- **stdout belongs to the protocol.** A single stray `console.log` corrupts the JSON-RPC
+  stream and the connection dies silently. Diagnostics go to stderr, and
+  `test/mcp-server.test.ts` asserts that nothing non-JSON ever reaches stdout.
+- **Verified by speaking the protocol, not by assuming the SDK works.** The test spawns the
+  server, performs a real `initialize` handshake, lists tools, and calls both — and
+  separately, by hand, the drift path was forced into its stale and no-code states to
+  confirm the tool reports them rather than only ever saying "no drift".
+
+The `on-architecture-change` hook now tells the agent to call `check_drift` directly,
+falling back to the CLI script if the tool is unavailable.

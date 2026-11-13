@@ -9,7 +9,7 @@
       "matcher": "architecture/.*\\.puml$",
       "action": {
         "type": "agent",
-        "prompt": "An approved architecture file under architecture/ changed. Read .kiro/steering/architecture.md and the changed file. For each approved element whose block changed or is new, generate or update src/<element-id>.ts and test/<element-id>.test.ts. Do not touch unchanged elements. After writing each element's files, run `node mcp/update-trace.mjs <element-id>` to record it in trace.json -- never hand-write or hand-edit a row yourself, its hash has to come from that script's own hashElement(), not a guess. Then run `node mcp/check-drift.mjs` and fix anything it reports."
+        "prompt": "An approved architecture file under architecture/ changed. Read .kiro/steering/architecture.md and the changed file. For each approved element whose block changed or is new, generate or update src/<element-id>.ts and test/<element-id>.test.ts. Do not touch unchanged elements. After writing each element's files, run `node mcp/update-trace.mjs <element-id>` to record it in trace.json -- never hand-write or hand-edit a row yourself, its hash has to come from that script's own hashElement(), not a guess. Then call the check_drift MCP tool (doppel-drift server) and fix anything it reports; `node mcp/check-drift.mjs` is the same check from the command line if the tool is unavailable."
       }
     }
   ]

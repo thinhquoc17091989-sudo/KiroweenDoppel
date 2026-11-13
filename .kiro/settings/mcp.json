@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "doppel-drift": {
+      "command": "node",
+      "args": ["mcp/server.mjs"],
+      "disabled": false,
+      "autoApprove": ["check_drift", "list_trace"]
+    }
+  }
+}

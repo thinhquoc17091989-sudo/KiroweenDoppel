@@ -17,7 +17,7 @@
 
 ## Week 3, Nov 24 to 30: MCP, second sample, polish
 - [x] 10a. (C) mcp/check-drift.mjs: plain Node script, no-code/stale/orphan report from architecture/*.puml + trace.json, fixes the drift-on-prompt hook (R6). Tested against real no-architecture, no-code, in-sync, stale and orphan states.
-- [ ] 10b. (K, C reviews) Wrap check-drift.mjs's logic as a real MCP tool (check_drift, list_trace); register in `.kiro/settings/mcp.json` so Kiro can call it directly, not only via the prompt-submit hook's stdout
+- [x] 10b. (C) Real MCP server: mcp/server.mjs exposes check_drift and list_trace over stdio (official @modelcontextprotocol/sdk), registered in .kiro/settings/mcp.json, verified by a real JSON-RPC handshake in test/mcp-server.test.ts (not just assumed)
 - [ ] 11. (K) Second sample system `samples/library-lending` to show versatility
 - [x] 11a. (C) Add `status: 'modified'` to the Status type (now shared via dsl.ts across every dialect) and wire it through review.ts, render.ts, main.ts, style.css
 - [ ] 11b. (C) Multi-file architecture: a file picker inside Static, one element id resolvable across files, layout merge aware of which file an element came from
