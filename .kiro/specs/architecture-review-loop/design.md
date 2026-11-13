@@ -152,3 +152,32 @@ Two setup paths, not mutually exclusive:
   Doppel rather than only starting new ones).
 Both need the portability fix above done first; neither is useful while the UI only knows
 how to load one hardcoded sample.
+
+## Trace and drift, built (2026-11-13)
+`src/core/trace.ts` is the one place that knows how to tell in-sync apart from stale apart
+from no-code. A row's hash is computed only from kind, name and req (sorted, so order
+never matters) — never id or alias (a rename must not look like a content change, that is
+the entire point of a stable id) and never status (proposed vs approved vs modified is a
+review decision, not a change to what was built). `trace.json` lives at the repo root,
+keyed by element id, keys sorted on write so it diffs cleanly in git.
+
+`mcp/check-drift.mjs` is the first half of task 10: a plain Node script, not yet a real MCP
+tool, that reads every `architecture/*.puml` (static dialect only; the dynamic dialects
+are not written into `architecture/` by anything yet), loads `trace.json`, and reports
+no-code / stale / orphan-row elements via `trace.ts`. It is what the `drift-on-prompt` hook
+was already pointed at and previously could not find. Node 24 strips TypeScript types
+natively, so the script imports `src/core/*.ts` directly — no build step, no second copy
+of the parsing logic. Tested by hand against all five real states (no architecture at all,
+elements with no trace, all in sync, one stale, one orphan row) before trusting it.
+
+One real Node/Windows finding worth keeping: calling `process.exit()` right after this
+loader's async hooks raises a libuv assertion (`UV_HANDLE_CLOSING`) and crashes the process
+even though the printed output was already correct. The fix was to stop calling
+`process.exit()` at all and let the script end by falling off the bottom once the event
+loop drains — not a workaround, the simpler and more correct shape anyway, since every
+branch already wanted the same exit code 0 (drift found is information, not a script
+failure). Keep this in mind for any other `.mjs` script here that imports `.ts` directly.
+
+Still task 10b, not yet built: wrapping this same logic as a real MCP tool
+(`check_drift`, `list_trace`) registered in `.kiro/settings/mcp.json`, so Kiro can call it
+directly instead of only reading it secondhand through the prompt-submit hook's stdout.

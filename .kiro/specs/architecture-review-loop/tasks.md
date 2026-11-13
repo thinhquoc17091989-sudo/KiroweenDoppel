@@ -10,12 +10,13 @@
 ## Week 2, Nov 17 to 23: the loop
 - [x] 5. (C) Review UI: SVG diagram, dashed vs solid, drag to position, `layout.json` sidecar (R1)
 - [x] 6. (C) Accept, rename, reject (R2); approve writes `architecture/*.puml` via File System Access API (R3.1)
-- [ ] 7. (C) Trace module, `trace.json`, stale detection by element hash (R5)
+- [x] 7. (C) Trace module, `trace.json`, stale detection by element hash (R5)
 - [ ] 8. (K) Hook: on architecture change, generate one code file and one test file per changed element and update trace rows (R4). Run on the plant-watering sample.
 - [ ] 9. (C) Trace table in UI (R5.1)
 
 ## Week 3, Nov 24 to 30: MCP, second sample, polish
-- [ ] 10. (K, C reviews) drift-mcp server with `check_drift` and `list_trace`; register in `.kiro/settings/mcp.json`; hook calls it (R6)
+- [x] 10a. (C) mcp/check-drift.mjs: plain Node script, no-code/stale/orphan report from architecture/*.puml + trace.json, fixes the drift-on-prompt hook (R6). Tested against real no-architecture, no-code, in-sync, stale and orphan states.
+- [ ] 10b. (K, C reviews) Wrap check-drift.mjs's logic as a real MCP tool (check_drift, list_trace); register in `.kiro/settings/mcp.json` so Kiro can call it directly, not only via the prompt-submit hook's stdout
 - [ ] 11. (K) Second sample system `samples/library-lending` to show versatility
 - [x] 11a. (C) Add `status: 'modified'` to the Status type (now shared via dsl.ts across every dialect) and wire it through review.ts, render.ts, main.ts, style.css
 - [ ] 11b. (C) Multi-file architecture: a file picker inside Static, one element id resolvable across files, layout merge aware of which file an element came from
