@@ -10,18 +10,26 @@
   <header>
     <div class="brand"><b>Doppel</b><span>you draw the architecture, Kiro writes the code and keeps it honest</span></div>
     <div class="spacer"></div>
+    <button id="btnCompare" class="ghost" title="Show the last-approved architecture beside this proposal, to check them in parallel">Compare with approved</button>
     <button id="btnArrange" class="ghost" title="Re-place every element automatically">Arrange</button>
     <button id="btnReset" class="ghost" title="Reload the sample proposals">Reset sample</button>
     <button id="btnApprove" class="primary" title="Write the approved elements as architecture/*.puml">Approve architecture</button>
   </header>
   <main>
     <section id="canvasWrap">
-      <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
-      <div id="legend">
-        <span><i class="sw dashed"></i>proposed</span>
-        <span><i class="sw solid"></i>approved</span>
-        <span><i class="sw iface"></i>interface</span>
-        <span class="hint">drag to place · double-click to rename</span>
+      <div class="diagramPane" id="paneProposal">
+        <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="legend">
+          <span><i class="sw dashed"></i>proposed</span>
+          <span><i class="sw solid"></i>approved</span>
+          <span><i class="sw iface"></i>interface</span>
+          <span class="hint">drag to place · double-click to rename</span>
+        </div>
+      </div>
+      <div class="diagramPane" id="paneApproved" hidden>
+        <div class="paneLabel">Approved architecture (previous)</div>
+        <svg id="canvasApproved" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="paneEmpty" id="approvedEmpty"></div>
       </div>
     </section>
     <aside>

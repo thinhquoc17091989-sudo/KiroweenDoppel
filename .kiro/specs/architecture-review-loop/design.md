@@ -257,3 +257,32 @@ no `' status:' comment in the file (same as every other element there), so it pa
 `loadSample()` applies the whole-file override that `proposals.puml` represents nothing but
 proposals in the first place. Kiro matched the file's own existing convention correctly; an
 over-specific test assertion was the thing that needed fixing, not the content.
+
+## Compare-with-approved, in the real product this time (2026-11-13)
+The dev console's two-panel view (proposals + approved) was mine only. The actual review
+page (`index.html`) needed its own version — a "Compare with approved" toggle in the
+header, splitting the canvas into two stacked panes, both drawn by the exact same
+`render.ts`/`layout.ts` the single-pane view already used. No second rendering path.
+
+Along the way, `btnApprove`'s directory-picker call stopped being re-prompted on every
+click: the handle is now cached in a module-level `projectDir` once granted, reused by
+both Approve and Compare for the rest of the session. This was needed for Compare to work
+at all (it has to read the same folder Approve writes to) and happens to make repeated
+approvals smoother too.
+
+Loading the approved side reads every `*.puml` directly under `architecture/` (not
+recursively, and not the dynamic dialects, which nothing writes there yet) and merges them
+into one `Model`, the same flattening the dev console's `mergeArchitecture` does — a real
+multi-file merge (an element spanning files, a shared layout) is still task 11b, not this.
+A missing `architecture/` folder reads as "nothing approved yet," not an error.
+
+## Still open: the auto-pop-up half of the request (not built this pass)
+The other half of what was asked for — the page noticing on its own that Kiro finished and
+surfacing the new proposal without the reviewer refreshing anything — is not built. The
+honest shape for a shipped static page: poll the already-granted directory handle every
+few seconds for `proposals.puml`'s last-modified time, and show a banner the moment it
+changes, rather than claim an OS-level pop-up a browser tab cannot produce. Needs: a
+polling interval decision, pause-when-tab-hidden handling (`document.visibilityState`), and
+a decision on what the banner does — redraw in place vs. require a click to adopt the new
+proposal (the latter is safer if the reviewer was mid-edit of the current one). Tracked as
+task 26.

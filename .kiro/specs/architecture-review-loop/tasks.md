@@ -41,3 +41,7 @@
 - [ ] 23. (C) Stop hardcoding the plant-watering sample in main.ts; load whatever architecture/ and proposals.puml actually exist in the host project
 - [ ] 24. (C) scripts/setup.mjs: create architecture/, copy steering + hooks, register drift-mcp (greenfield path)
 - [ ] 25. (K) AI-driven bootstrap: Kiro proposes an initial architecture from an existing codebase via propose-mcp (brownfield path)
+
+## Compare and auto-detect (added 2026-11-13, product UI this time, not the dev console)
+- [x] 25b. (C) "Compare with approved" toggle in the real review page: cached directory handle, loads and merges architecture/*.puml, renders beside the proposal using the same render.ts/layout.ts
+- [ ] 26. (C) Auto-detect a finished Kiro run: poll the granted directory handle for proposals.puml's last-modified time, banner on change, pause while the tab is hidden

@@ -7,8 +7,9 @@ import { render } from './ui/render';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const svg = $('#canvas') as unknown as SVGSVGElement;
+const svgApproved = $('#canvasApproved') as unknown as SVGSVGElement;
 
-interface State { model: Model; layout: Layout; selected: string | null }
+interface State { model: Model; layout: Layout; selected: string | null; compareOn: boolean }
 
 function loadSample(): Model {
   const m = parse(sampleText);
@@ -24,8 +25,50 @@ function persistLayout(l: Layout) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(l)); } catch { /* private window: fine */ }
 }
 
-const state: State = { model: loadSample(), layout: {}, selected: null };
+const state: State = { model: loadSample(), layout: {}, selected: null, compareOn: false };
 state.layout = mergeLayout(state.model, savedLayout());
+
+// Held across actions once granted, so Approve, then Compare, then Approve again never
+// re-prompts the folder picker mid-session -- one grant covers the whole working session.
+let projectDir: FileSystemDirectoryHandle | null = null;
+
+async function getProjectDir(): Promise<FileSystemDirectoryHandle | null> {
+  if (projectDir) return projectDir;
+  const w = window as unknown as { showDirectoryPicker?: (o?: object) => Promise<FileSystemDirectoryHandle> };
+  if (!w.showDirectoryPicker) return null;
+  try {
+    projectDir = await w.showDirectoryPicker({ mode: 'readwrite' });
+    return projectDir;
+  } catch (err) {
+    if ((err as Error).name !== 'AbortError') console.warn(err);
+    return null;
+  }
+}
+
+/** Every *.puml under architecture/, merged into one Model. Null means "no folder chosen
+ *  or the user cancelled"; an empty Model (no elements) means "folder chosen, nothing
+ *  approved there yet" -- callers tell these apart to show the right empty state. */
+async function loadApprovedArchitecture(dir: FileSystemDirectoryHandle): Promise<Model> {
+  const merged: Model = { title: 'architecture', elements: [], links: [], notes: [] };
+  let archDir: FileSystemDirectoryHandle;
+  try {
+    archDir = await dir.getDirectoryHandle('architecture');
+  } catch {
+    return merged; // no architecture/ folder yet: nothing approved, not an error
+  }
+  const anyDir = archDir as unknown as { values(): AsyncIterable<FileSystemHandle> };
+  for await (const entry of anyDir.values()) {
+    if (entry.kind !== 'file' || !entry.name.endsWith('.puml')) continue;
+    const fh = entry as FileSystemFileHandle;
+    const file = await fh.getFile();
+    const text = await file.text();
+    const m = parse(text);
+    merged.elements.push(...m.elements);
+    merged.links.push(...m.links);
+    merged.notes.push(...m.notes);
+  }
+  return merged;
+}
 
 function toast(msg: string) {
   const t = $('#toast');
@@ -81,6 +124,27 @@ function draw() {
   $('#puml').textContent = print(state.model);
 }
 
+async function refreshCompare() {
+  if (!state.compareOn) return;
+  const empty = $('#approvedEmpty');
+  const dir = await getProjectDir();
+  if (!dir) {
+    svgApproved.replaceChildren();
+    empty.textContent = 'this browser, or you, declined folder access — Chromium-based browsers only';
+    empty.style.display = 'flex';
+    return;
+  }
+  const approved = await loadApprovedArchitecture(dir);
+  if (!approved.elements.length) {
+    svgApproved.replaceChildren();
+    empty.textContent = 'nothing approved in this project yet';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  render(svgApproved, approved, arrangeAll(approved), null, { onSelect() {}, onRename() {}, onDragStart() {} });
+}
+
 function onSelect(id: string) { state.selected = id; draw(); }
 
 function doRename(id: string) {
@@ -119,22 +183,28 @@ function clientToSvg(cx: number, cy: number) {
 // header buttons
 $('#btnArrange').addEventListener('click', () => { state.layout = arrangeAll(state.model); persistLayout(state.layout); draw(); });
 $('#btnReset').addEventListener('click', () => { state.selected = null; state.layout = {}; persistLayout({}); setModel(loadSample()); toast('sample reloaded'); });
+$('#btnCompare').addEventListener('click', async () => {
+  state.compareOn = !state.compareOn;
+  $('#btnCompare').classList.toggle('on', state.compareOn);
+  $('#paneApproved').hidden = !state.compareOn;
+  if (state.compareOn) await refreshCompare();
+});
 $('#btnApprove').addEventListener('click', async () => {
   const approved = approvedOnly(state.model);
   if (!approved.elements.length) { toast('accept at least one element first'); return; }
   const text = print(approved);
   const fileName = `${state.model.title || 'architecture'}.puml`;
   const layoutText = JSON.stringify(Object.fromEntries(approved.elements.map((e) => [e.id, state.layout[e.id]])), null, 2);
-  const w = window as unknown as { showDirectoryPicker?: (o?: object) => Promise<FileSystemDirectoryHandle> };
-  if (w.showDirectoryPicker) {
+  const root = await getProjectDir();
+  if (root) {
     try {
-      const root = await w.showDirectoryPicker({ mode: 'readwrite' });
       const dir = await root.getDirectoryHandle('architecture', { create: true });
       await writeFile(dir, fileName, text);
       await writeFile(dir, 'layout.json', layoutText);
       toast(`wrote architecture/${fileName} and layout.json`);
+      if (state.compareOn) await refreshCompare(); // the diagram you just wrote should show up on its own side immediately
       return;
-    } catch (err) { if ((err as Error).name === 'AbortError') return; console.warn(err); }
+    } catch (err) { console.warn(err); }
   }
   await navigator.clipboard?.writeText(text).catch(() => undefined);
   download(fileName, text);
