@@ -3,7 +3,7 @@ import fc from 'fast-check';
 import type { Element } from '../src/core/model';
 import {
   computeStatus, emptyTrace, hashElement, orphanRows, parseTrace, pathsFor,
-  printTrace, removeRow, upsertRow, type TraceFile, type TraceRow,
+  isApprovedArchitectureFile, printTrace, removeRow, upsertRow, type TraceFile, type TraceRow,
 } from '../src/core/trace';
 
 const el = (over: Partial<Element> = {}): Element => ({
@@ -141,5 +141,25 @@ describe('round trip (property, trace)', () => {
       const once = printTrace(t);
       expect(printTrace(parseTrace(once))).toBe(once);
     }), { numRuns: 100 });
+  });
+});
+
+describe('isApprovedArchitectureFile', () => {
+  it('accepts ordinary architecture files', () => {
+    expect(isApprovedArchitectureFile('plant-watering.puml')).toBe(true);
+    expect(isApprovedArchitectureFile('topology.puml')).toBe(true);
+  });
+
+  it('rejects a proposals file, whatever the casing', () => {
+    // architecture/ is fed to Kiro as approved truth via steering; a proposals file in
+    // there would be read as settled design and double-count shared elements.
+    expect(isApprovedArchitectureFile('proposals.puml')).toBe(false);
+    expect(isApprovedArchitectureFile('Proposals.puml')).toBe(false);
+    expect(isApprovedArchitectureFile('PROPOSALS.PUML')).toBe(false);
+  });
+
+  it('rejects non-puml files', () => {
+    expect(isApprovedArchitectureFile('layout.json')).toBe(false);
+    expect(isApprovedArchitectureFile('README.md')).toBe(false);
   });
 });

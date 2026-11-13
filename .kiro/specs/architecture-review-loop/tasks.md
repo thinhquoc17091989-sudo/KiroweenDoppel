@@ -38,7 +38,7 @@
 - [ ] 22. (C) reject() on a 'modified' element: store a pre-change snapshot so reject can revert instead of delete
 
 ## Shippable as a package (added 2026-11-13)
-- [ ] 23. (C) Stop hardcoding the plant-watering sample in main.ts; load whatever architecture/ and proposals.puml actually exist in the host project
+- [x] 23. (C) Stop hardcoding the plant-watering sample: main.ts fetches /api/state for the HOST project's proposals, falling back to the bundled sample only when no server is present (static hosting), and says which it is reading. Proposals are searched for at proposals.puml / doppel/proposals.puml / samples/... -- never architecture/proposals.puml, which would feed unapproved proposals to Kiro as approved truth
 - [ ] 24. (C) scripts/setup.mjs: create architecture/, copy steering + hooks, register drift-mcp (greenfield path)
 - [ ] 25. (K) AI-driven bootstrap: Kiro proposes an initial architecture from an existing codebase via propose-mcp (brownfield path)
 
@@ -47,5 +47,5 @@
 - [ ] 26. (C) Auto-detect a finished Kiro run: poll the granted directory handle for proposals.puml's last-modified time, banner on change, pause while the tab is hidden
 
 ## Delivery shape (decided 2026-11-13)
-- [ ] 27. (C, HIGH — this is what the 2025 winner got right) `npx doppel` entry point: one command in any project folder starts the local server and opens the tool. Match the winner's friction level: one setup step, one run command, nothing for a judge to work out
+- [x] 27. (C) `npx doppel` entry point (bin/doppel.mjs): Vite root = the Doppel package, data root = the host project (--root to override). Verified against a throwaway unrelated project (a payments architecture) that it serves THAT project's files and none of Doppel's own
 - [ ] 28. (C, OPTIONAL — not required for compliance, see design.md correction) Static GitHub Pages build: sample data, read-only, lowers friction for a judge but the repo link is a valid "working app URL" on its own

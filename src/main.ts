@@ -1,32 +1,62 @@
-import sampleText from '../samples/plant-watering/proposals.puml?raw';
-import type { Model } from './core/model';
+import bundledSampleText from '../samples/plant-watering/proposals.puml?raw';
+import { emptyModel, type Model } from './core/model';
 import { parse, print } from './core/puml';
 import { arrangeAll, mergeLayout, type Layout } from './core/layout';
 import { accept, approvedOnly, refreshLinkStatus, reject, rename } from './core/review';
+import { isApprovedArchitectureFile } from './core/trace';
 import { render } from './ui/render';
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const svg = $('#canvas') as unknown as SVGSVGElement;
 const svgApproved = $('#canvasApproved') as unknown as SVGSVGElement;
 
-interface State { model: Model; layout: Layout; selected: string | null; compareOn: boolean }
+interface State { model: Model; layout: Layout; selected: string | null; compareOn: boolean; source: string }
 
-function loadSample(): Model {
-  const m = parse(sampleText);
-  // Everything in proposals.puml is a proposal unless the file says otherwise.
+/** Everything in a proposals file is a pending decision, whatever the file itself says. */
+function asProposals(m: Model): Model {
   return refreshLinkStatus({ ...m, elements: m.elements.map((e) => ({ ...e, status: 'proposed' as const })) });
 }
 
-const LS_KEY = 'doppel.layout.plant-watering';
-function savedLayout(): Layout {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) ?? '{}') as Layout; } catch { return {}; }
-}
-function persistLayout(l: Layout) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(l)); } catch { /* private window: fine */ }
+/**
+ * Two ways this page gets its data, and it must work both ways:
+ *  - **served by the local tool** (`npx doppel`): /api/state returns the HOST project's own
+ *    proposals file, so Doppel dropped into someone else's repo shows THEIR architecture.
+ *  - **static hosting** (GitHub Pages, no server): that fetch fails, and the bundled
+ *    plant-watering sample is used so the public demo still works for anyone clicking a link.
+ * The page says which one it is, because silently showing a sample while a reviewer believes
+ * they are looking at their own project would be the worst possible failure here.
+ */
+async function loadProject(): Promise<{ model: Model; source: string }> {
+  try {
+    const res = await fetch('/api/state');
+    // A static host does not 404 this: it serves index.html with a 200 (SPA fallback), so
+    // the content type is what actually distinguishes "no server" from "real API", not the
+    // status code. Checked explicitly rather than relying on res.json() throwing on HTML.
+    const isJson = res.headers.get('content-type')?.includes('application/json');
+    if (res.ok && isJson) {
+      const data = await res.json() as { ok?: boolean; proposalsFile?: { name: string; text: string } | null };
+      if (data.ok && data.proposalsFile) {
+        return { model: asProposals(parse(data.proposalsFile.text)), source: data.proposalsFile.name };
+      }
+      if (data.ok) return { model: emptyModel(), source: 'no proposals file in this project yet' };
+    }
+  } catch {
+    // no local server: static hosting, fall through to the bundled sample
+  }
+  return { model: asProposals(parse(bundledSampleText)), source: 'bundled sample (no project server)' };
 }
 
-const state: State = { model: loadSample(), layout: {}, selected: null, compareOn: false };
-state.layout = mergeLayout(state.model, savedLayout());
+// Layout is keyed by the diagram title, not a fixed string: two different projects opened in
+// the same browser must not inherit each other's element positions.
+const lsKey = (title: string) => `doppel.layout.${title || 'untitled'}`;
+function savedLayout(title: string): Layout {
+  try { return JSON.parse(localStorage.getItem(lsKey(title)) ?? '{}') as Layout; } catch { return {}; }
+}
+function persistLayout(l: Layout) {
+  try { localStorage.setItem(lsKey(state.model.title), JSON.stringify(l)); } catch { /* private window: fine */ }
+}
+
+const state: State = { model: emptyModel(), layout: {}, selected: null, compareOn: false, source: 'loading…' };
 
 // Held across actions once granted, so Approve, then Compare, then Approve again never
 // re-prompts the folder picker mid-session -- one grant covers the whole working session.
@@ -58,7 +88,7 @@ async function loadApprovedArchitecture(dir: FileSystemDirectoryHandle): Promise
   }
   const anyDir = archDir as unknown as { values(): AsyncIterable<FileSystemHandle> };
   for await (const entry of anyDir.values()) {
-    if (entry.kind !== 'file' || !entry.name.endsWith('.puml')) continue;
+    if (entry.kind !== 'file' || !isApprovedArchitectureFile(entry.name)) continue;
     const fh = entry as FileSystemFileHandle;
     const file = await fh.getFile();
     const text = await file.text();
@@ -122,6 +152,7 @@ function draw() {
   fillList('#listProposed', '#countProposed', state.model.elements.filter((e) => e.status === 'proposed' || e.status === 'modified'));
   fillList('#listApproved', '#countApproved', state.model.elements.filter((e) => e.status === 'approved'));
   $('#puml').textContent = print(state.model);
+  $('#source').textContent = state.source;
 }
 
 async function refreshCompare() {
@@ -182,7 +213,17 @@ function clientToSvg(cx: number, cy: number) {
 
 // header buttons
 $('#btnArrange').addEventListener('click', () => { state.layout = arrangeAll(state.model); persistLayout(state.layout); draw(); });
-$('#btnReset').addEventListener('click', () => { state.selected = null; state.layout = {}; persistLayout({}); setModel(loadSample()); toast('sample reloaded'); });
+$('#btnReset').addEventListener('click', async () => {
+  // Re-reads from whatever this page is actually backed by (the host project, or the
+  // bundled sample), not always the sample -- discarding positions as it goes.
+  state.selected = null;
+  state.layout = {};
+  const { model, source } = await loadProject();
+  state.source = source;
+  persistLayout({});
+  setModel(model);
+  toast(`reloaded from ${source}`);
+});
 $('#btnCompare').addEventListener('click', async () => {
   state.compareOn = !state.compareOn;
   $('#btnCompare').classList.toggle('on', state.compareOn);
@@ -222,4 +263,13 @@ function download(name: string, content: string) {
   URL.revokeObjectURL(a.href);
 }
 
-draw();
+async function init() {
+  draw(); // paint the shell immediately so the page is never blank while the fetch resolves
+  const { model, source } = await loadProject();
+  state.source = source;
+  state.model = model;
+  state.layout = mergeLayout(model, savedLayout(model.title));
+  draw();
+}
+
+void init();

@@ -21,28 +21,48 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { recordGeneration } from '../mcp/update-trace.mjs';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { computeStatus, emptyTrace, isApprovedArchitectureFile, orphanRows, parseTrace } from '../src/core/trace.ts';
 
 const MODELS = ['claude-haiku-5.5', 'claude-sonnet-5.5', 'claude-opus-5.5', 'auto'];
 const KIRO_EXE = join(process.env.LOCALAPPDATA ?? '', 'kiro-cli', 'kiro-cli.exe');
-const PROPOSALS_REL = 'samples/plant-watering/proposals.puml'; // the one proposals file this project's demo writes to today
+/**
+ * Where a proposals file might live, in priority order. Hardcoding only the samples/ path
+ * (as an earlier version did) meant a real project had to mimic Doppel's demo folder layout
+ * before anything showed up — found by actually running the CLI against another project.
+ *
+ * Deliberately NOT `architecture/proposals.puml`, even though that reads as the natural
+ * spot: `architecture/` means APPROVED, and `.kiro/steering/architecture.md` feeds
+ * `architecture/*.puml` to Kiro as the approved truth. A proposals file living there would
+ * hand Kiro unapproved proposals as settled design and double-count every element that
+ * appears in both — which is exactly what happened when it was tried.
+ */
+const PROPOSALS_CANDIDATES = [
+  'proposals.puml',
+  'doppel/proposals.puml',
+  'samples/plant-watering/proposals.puml',
+];
+
+/** Never counted as approved architecture, wherever someone puts it. */
+const PROPOSALS_BASENAME = 'proposals.puml';
 
 export function doppelDevApi(root) {
   const archDir = join(root, 'architecture');
   const tracePath = join(root, 'trace.json');
-  const proposalsPath = join(root, PROPOSALS_REL);
 
   function loadArchitecture() {
     if (!existsSync(archDir)) return { files: [], elements: [] };
-    const names = readdirSync(archDir).filter((f) => f.endsWith('.puml'));
+    const names = readdirSync(archDir).filter(isApprovedArchitectureFile);
     const files = names.map((name) => ({ name, text: readFileSync(join(archDir, name), 'utf8') }));
     const elements = files.flatMap((f) => parsePuml(f.text).elements);
     return { files, elements };
   }
 
   function loadProposals() {
-    if (!existsSync(proposalsPath)) return null;
-    return { name: PROPOSALS_REL, text: readFileSync(proposalsPath, 'utf8') };
+    for (const rel of PROPOSALS_CANDIDATES) {
+      const abs = join(root, rel);
+      if (existsSync(abs)) return { name: rel, text: readFileSync(abs, 'utf8') };
+    }
+    return null;
   }
 
   function loadTrace() {

@@ -22,7 +22,7 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { computeStatus, emptyTrace, isApprovedArchitectureFile, orphanRows, parseTrace } from '../src/core/trace.ts';
 
 // The project root. Kiro launches the server with cwd set to the workspace; DOPPEL_ROOT
 // overrides that for anyone running it from somewhere else.
@@ -32,7 +32,7 @@ function loadArchitecture() {
   const dir = join(ROOT, 'architecture');
   if (!existsSync(dir)) return [];
   const elements = [];
-  for (const name of readdirSync(dir).filter((f) => f.endsWith('.puml'))) {
+  for (const name of readdirSync(dir).filter(isApprovedArchitectureFile)) {
     elements.push(...parsePuml(readFileSync(join(dir, name), 'utf8')).elements);
   }
   return elements;

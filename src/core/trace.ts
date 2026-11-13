@@ -62,6 +62,20 @@ export function pathsFor(id: string): { codePath: string; testPath: string } {
   return { codePath: `src/${id}.ts`, testPath: `test/${id}.test.ts` };
 }
 
+/**
+ * Whether a file inside architecture/ counts as APPROVED architecture.
+ *
+ * Defined once here because five separate readers glob that folder (the dev API, the MCP
+ * server, both mcp/ scripts and the review page) and they must agree exactly: anything they
+ * accept is handed to Kiro as settled design via `.kiro/steering/architecture.md`, which
+ * includes `architecture/*.puml` wholesale. A proposals file that slipped into that folder
+ * would be read as approved and double-count every element it shares with the real
+ * architecture — observed for real before this guard existed.
+ */
+export function isApprovedArchitectureFile(name: string): boolean {
+  return name.endsWith('.puml') && name.toLowerCase() !== 'proposals.puml';
+}
+
 export function emptyTrace(): TraceFile {
   return {};
 }

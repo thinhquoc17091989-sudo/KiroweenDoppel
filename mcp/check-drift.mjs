@@ -24,7 +24,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { computeStatus, emptyTrace, isApprovedArchitectureFile, orphanRows, parseTrace } from '../src/core/trace.ts';
 
 const root = process.cwd();
 const archDir = join(root, 'architecture');
@@ -33,7 +33,7 @@ const brief = process.argv.includes('--brief');
 
 function loadArchitectureElements() {
   if (!existsSync(archDir)) return [];
-  const files = readdirSync(archDir).filter((f) => f.endsWith('.puml'));
+  const files = readdirSync(archDir).filter(isApprovedArchitectureFile);
   const elements = [];
   for (const f of files) {
     const text = readFileSync(join(archDir, f), 'utf8');

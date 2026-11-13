@@ -5,8 +5,12 @@
   "type": "module",
   "description": "Draw the architecture, Kiro writes the code and keeps it honest.",
   "license": "MIT",
+  "bin": {
+    "doppel": "bin/doppel.mjs"
+  },
   "scripts": {
     "dev": "vite",
+    "doppel": "node bin/doppel.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

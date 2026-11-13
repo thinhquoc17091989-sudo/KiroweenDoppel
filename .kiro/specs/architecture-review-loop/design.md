@@ -383,3 +383,33 @@ Two things that matter and are easy to get wrong:
 
 The `on-architecture-change` hook now tells the agent to call `check_drift` directly,
 falling back to the CLI script if the tool is unavailable.
+
+## Drop-in, working for real (2026-11-13, tasks 23 and 27)
+`npx doppel` (or `node bin/doppel.mjs`) in any project folder serves the review page against
+THAT project. The distinction that makes it work: Vite's root is the Doppel package (where
+index.html and src/ live) while the API plugin's root is the host project (wherever the
+command ran). Conflating them is the obvious bug — Vite would hunt for index.html in the
+user's repo, or the API would serve Doppel's own sample instead of their architecture.
+
+The review page now gets its data two ways and must work both:
+- **served by the tool** — `/api/state` returns the host project's proposals file;
+- **static hosting** — that fetch returns index.html with a 200 (an SPA fallback, NOT a 404),
+  so the content type is what distinguishes the two, not the status code. Then the bundled
+  plant-watering sample is used so a public demo link still works.
+The header always names the file it read. Silently showing a sample while a reviewer
+believes they are looking at their own project would be the worst failure available here.
+
+**Two real bugs found by running it against a throwaway unrelated project** (a payments
+architecture), not by reasoning about it:
+1. The proposals path was still hardcoded to `samples/plant-watering/proposals.puml` — just
+   moved from main.ts into the plugin. A real project had to mimic Doppel's demo folder
+   layout before anything appeared. Now searched for at `proposals.puml`,
+   `doppel/proposals.puml`, then the samples path last (so this repo still demoes itself).
+2. Putting proposals at `architecture/proposals.puml` — the apparently natural spot, and the
+   first fix attempted — **broke the core invariant**: `architecture/` means approved, and
+   `.kiro/steering/architecture.md` feeds `architecture/*.puml` to Kiro wholesale as settled
+   design. A proposals file there was read as approved AND double-counted every element
+   shared with the real architecture (`checkout-api` appeared twice). Fixed by excluding it
+   everywhere via one shared predicate, `isApprovedArchitectureFile` in `src/core/trace.ts`,
+   because five separate readers glob that folder (dev API, MCP server, both mcp/ scripts,
+   the review page) and they must agree exactly. Covered by tests.

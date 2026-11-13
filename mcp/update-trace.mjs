@@ -15,7 +15,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { emptyTrace, hashElement, parseTrace, pathsFor, printTrace, upsertRow } from '../src/core/trace.ts';
+import { emptyTrace, hashElement, isApprovedArchitectureFile, parseTrace, pathsFor, printTrace, upsertRow } from '../src/core/trace.ts';
 
 /**
  * @param {string} elementId
@@ -27,7 +27,7 @@ export function recordGeneration(elementId, opts = {}) {
   const archDir = join(root, 'architecture');
   const tracePath = join(root, 'trace.json');
 
-  const files = existsSync(archDir) ? readdirSync(archDir).filter((f) => f.endsWith('.puml')) : [];
+  const files = existsSync(archDir) ? readdirSync(archDir).filter(isApprovedArchitectureFile) : [];
   let found;
   for (const f of files) {
     const e = parsePuml(readFileSync(join(archDir, f), 'utf8')).elements.find((x) => x.id === elementId);
