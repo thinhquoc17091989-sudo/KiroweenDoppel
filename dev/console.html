@@ -4,17 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Doppel dev console</title>
+<link rel="stylesheet" href="/src/ui/style.css">
 <style>
-  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342; --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
-    --ok:#9fe0b8; --ok-bg:#173a2a; --warn:#ffcf7a; --warn-bg:#3d2e12; --bad:#f0a0a0; --bad-bg:#3d1a1a;
-    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
-  header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  header b { color: var(--accent); font-size: 17px; }
+  :root { --panel:#1d212b; --panel2:#242938; --line:#2d3342; --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --ok:#9fe0b8; --ok-bg:#173a2a; --warn:#ffcf7a; --warn-bg:#3d2e12; --bad:#f0a0a0; --bad-bg:#3d1a1a; }
+  body { overflow: auto; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; height: auto; }
   header span.note { font-size: 12px; color: var(--muted); }
-  main { display: grid; grid-template-columns: 420px 1fr; gap: 0; min-height: calc(100vh - 54px); }
-  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  main { display: grid; grid-template-columns: 400px 1fr; gap: 0; min-height: calc(100vh - 54px); }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
 
   .col { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
   .colLeft { border-right: 1px solid var(--line); }
@@ -22,17 +20,26 @@
 
   label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
   textarea { width: 100%; min-height: 110px; font: 13.5px/1.5 var(--sans); background: var(--panel); color: #e6e9f0; border: 1px solid var(--line); border-radius: 8px; padding: 10px; resize: vertical; }
-  select, button { font: 600 13px var(--sans); border-radius: 7px; cursor: pointer; }
-  select { background: var(--panel); color: #cfd5e3; border: 1px solid var(--line); padding: 8px 10px; }
+  select { font: 600 13px var(--sans); background: var(--panel); color: #cfd5e3; border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  button.primary { background: var(--accent); color: var(--accent-ink); border: 0; padding: 10px 16px; min-height: 40px; }
+  button.primary { font: 600 13px var(--sans); background: var(--accent); color: var(--accent-ink); border: 0; padding: 10px 16px; min-height: 40px; border-radius: 7px; cursor: pointer; }
   button.primary:disabled { opacity: .5; cursor: default; }
-  button.ghost { background: transparent; color: #cfd5e3; border: 1px solid var(--line); padding: 10px 14px; min-height: 40px; }
+  button.ghost { font: 600 13px var(--sans); background: transparent; color: #cfd5e3; border: 1px solid var(--line); padding: 10px 14px; min-height: 40px; border-radius: 7px; cursor: pointer; }
 
   .status { font-size: 12.5px; color: var(--muted); min-height: 18px; }
   .status.busy { color: var(--accent); }
 
-  pre { margin: 0; font: 12px/1.5 var(--mono); background: #12151c; border: 1px solid var(--line); border-radius: 8px; padding: 10px; white-space: pre-wrap; word-break: break-word; overflow: auto; color: #c8d0e0; max-height: 46vh; }
+  pre { margin: 0; font: 12px/1.5 var(--mono); background: #12151c; border: 1px solid var(--line); border-radius: 8px; padding: 10px; white-space: pre-wrap; word-break: break-word; overflow: auto; color: #c8d0e0; max-height: 32vh; }
+
+  .diagramPanel { border: 1px solid var(--line); border-radius: 8px; }
+  .diagramHead { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .diagramHead b { color: #e6e9f0; font-size: 12.5px; }
+  .diagramWrap { position: relative; height: 280px; background: var(--paper);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px; overflow: auto; border-radius: 0 0 8px 8px; }
+  .diagramWrap svg { display: block; }
+  .diagramEmpty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #8b8f82; font-size: 13px; text-align: center; padding: 0 30px; }
+  .proposalsPanel .diagramHead { border-top: 2px solid var(--proposed); }
 
   table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
   th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
@@ -43,15 +50,11 @@
   .badge.stale { background: var(--warn-bg); color: var(--warn); }
   .badge.no-code { background: var(--bad-bg); color: var(--bad); }
   .empty { color: var(--muted); font-size: 12.5px; font-style: italic; }
-
-  details { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
-  details summary { padding: 8px 10px; font-size: 12.5px; cursor: pointer; color: #cfd5e3; }
-  details pre { border: 0; border-top: 1px solid var(--line); border-radius: 0 0 8px 8px; max-height: 30vh; }
 </style>
 </head>
 <body>
 <header>
-  <b>Doppel dev console</b>
+  <b style="font-size:17px">Doppel dev console</b>
   <span class="note">developer tool for fast local iteration — not part of the shipped review page</span>
 </header>
 <main>
@@ -74,8 +77,21 @@
   </section>
 
   <section class="col">
-    <h2>Architecture files <span id="archCount"></span></h2>
-    <div id="archFiles"></div>
+    <div class="diagramPanel proposalsPanel">
+      <div class="diagramHead"><b>Proposals</b><span id="proposalsCount"></span></div>
+      <div class="diagramWrap">
+        <svg id="proposalsSvg" xmlns="http://www.w3.org/2000/svg" width="100%" height="280"></svg>
+        <div class="diagramEmpty" id="proposalsEmpty">no proposals file yet — ask Kiro to propose something</div>
+      </div>
+    </div>
+
+    <div class="diagramPanel">
+      <div class="diagramHead"><b>Approved architecture</b><span id="archCount"></span></div>
+      <div class="diagramWrap">
+        <svg id="architectureSvg" xmlns="http://www.w3.org/2000/svg" width="100%" height="280"></svg>
+        <div class="diagramEmpty" id="architectureEmpty">nothing approved yet</div>
+      </div>
+    </div>
 
     <h2>Trace <span id="traceCount"></span></h2>
     <table id="traceTable">
@@ -87,76 +103,6 @@
     <div id="orphans" class="empty">none</div>
   </section>
 </main>
-
-<script>
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-
-function badge(state) {
-  const label = state === 'in-sync' ? 'in sync' : state === 'stale' ? 'stale' : 'no code';
-  return `<span class="badge ${state}">${label}</span>`;
-}
-
-function renderState(state) {
-  $('archCount').textContent = `· ${state.architectureFiles.length} file(s), ${state.elementCount} element(s)`;
-  $('archFiles').innerHTML = state.architectureFiles.length
-    ? state.architectureFiles.map((f) => `<details><summary>${esc(f.name)}</summary><pre>${esc(f.text)}</pre></details>`).join('')
-    : '<div class="empty">none yet</div>';
-
-  $('traceCount').textContent = `· ${state.entries.length}`;
-  $('traceBody').innerHTML = state.entries.length
-    ? state.entries.map((e) => `<tr>
-        <td class="mono">${esc(e.id)}</td>
-        <td class="mono">${esc((e.req || []).join(' '))}</td>
-        <td>${badge(e.state)}</td>
-        <td class="mono">${esc(e.codePath || '—')}</td>
-        <td class="mono">${esc(e.testPath || '—')}</td>
-      </tr>`).join('')
-    : '<tr><td colspan="5" class="empty">no elements yet</td></tr>';
-
-  $('orphans').innerHTML = state.orphans.length
-    ? '<table><thead><tr><th>Id</th><th>Code</th></tr></thead><tbody>' +
-      state.orphans.map((o) => `<tr><td class="mono">${esc(o.id)}</td><td class="mono">${esc(o.codePath)}</td></tr>`).join('') +
-      '</tbody></table>'
-    : '<div class="empty">none</div>';
-}
-
-async function loadState() {
-  const r = await fetch('/api/state');
-  const data = await r.json();
-  if (!data.ok) { $('status').textContent = 'error loading state: ' + data.error; return; }
-  if (!$('model').options.length) {
-    $('model').innerHTML = data.models.map((m, i) => `<option${m === 'claude-sonnet-5.5' ? ' selected' : ''}>${m}</option>`).join('');
-  }
-  renderState(data);
-}
-
-async function runTask() {
-  const task = $('task').value.trim();
-  if (!task) { $('status').textContent = 'type a task description first'; return; }
-  const model = $('model').value;
-  $('runBtn').disabled = true;
-  $('status').textContent = `running on ${model}… this can take a while, especially on a stronger model`;
-  $('status').classList.add('busy');
-  try {
-    const r = await fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task, model }) });
-    const data = await r.json();
-    if (!data.ok) { $('status').textContent = 'error: ' + data.error; return; }
-    $('kiroOutput').textContent = (data.kiro.output || '(no output)') +
-      (data.synced.length ? `\n\n[dev console] trace.json synced for: ${data.synced.join(', ')}` : '\n\n[dev console] nothing new synced to trace.json this run');
-    renderState(data.state);
-    $('status').textContent = data.kiro.ok ? 'done' : 'Kiro exited with an error — see output above';
-  } catch (err) {
-    $('status').textContent = 'request failed: ' + err;
-  } finally {
-    $('runBtn').disabled = false;
-    $('status').classList.remove('busy');
-  }
-}
-
-$('runBtn').addEventListener('click', runTask);
-$('refreshBtn').addEventListener('click', loadState);
-loadState();
-</script>
+<script type="module" src="./console.ts"></script>
 </body>
 </html>

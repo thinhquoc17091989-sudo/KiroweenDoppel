@@ -10,7 +10,7 @@
  * (re)generates a file; this module only tells the hook, the UI and the drift checker
  * what the CURRENT state is, given whatever trace.json already holds.
  */
-import type { Element } from './model';
+import type { Element } from './model.ts';
 
 export interface TraceRow {
   /** Element id. One row per element that has ever had code generated for it. */

@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "test", "mcp"]
+  "include": ["src", "test", "mcp", "dev"]
 }

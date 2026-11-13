@@ -12,7 +12,7 @@
  * print(parse(text)) is canonical; parse(print(model)) returns the same model.
  * That round trip is property-tested in test/puml.test.ts.
  */
-import type { Element, ElementKind, Model, NoteSide, Status } from './model';
+import type { Element, ElementKind, Model, NoteSide, Status } from './model.ts';
 
 const RE_ELEMENT = /^(component|interface)\s+(?:"([^"]*)"|(\S+))(?:\s+as\s+(\w+))?\s*$/;
 const RE_LINK = /^(\w+)\s+(-->|\.\.>)\s+(\w+)\s*(?::\s*(.*?))?\s*$/;
