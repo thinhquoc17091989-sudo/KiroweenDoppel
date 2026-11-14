@@ -444,3 +444,34 @@ demo files while leaving the user's own code and architecture alone.
 Still true and worth knowing: generated code goes to `src/<element-id>.ts`, which in
 Scenario A sits in the same `src/` as Doppel's own implementation. Functional but untidy; a
 configurable code directory is the real fix and is not built.
+
+## Hook test result: it did NOT fire, and why (2026-11-14, task 8b answered)
+Tested live in the Kiro IDE. Kiro renamed the element correctly (keeping the alias and the
+`pump-driver` id, exactly as the stable-id design intends) and saved the file. Then nothing:
+no code regenerated, trace.json untouched, and `check-drift` correctly reported
+`pump-driver` stale. Only `architecture/plant-watering.puml` changed on disk.
+
+In the same session the MCP server was also absent — Kiro said outright "I don't have a tool
+called check_drift" and fell back to running the script through the shell. Two features that
+both read `.kiro/` config, both silently inert.
+
+**Cause, found in this project's own git history: there are two hook schemas and they are
+not interchangeable.**
+
+| Surface | File | Schema |
+|---|---|---|
+| Kiro IDE | `*.kiro.hook` | `{ when: { type: "fileEdited", patterns: [glob] }, then: { type: "askAgent", prompt } }` |
+| Kiro CLI | `*.json` | `{ version: "v1", hooks: [{ trigger: "PostFileSave", matcher: regex, action }] }` |
+
+The project started with the IDE form and it was deleted in commit 0b4431b, "corrected" to
+the CLI form taken from the online docs — a change made without ever running the IDE. The
+file was valid, the tests passed, and the feature was dead. Note the patterns differ too:
+the IDE takes a glob, the CLI a regex, so `architecture/.*\.puml$` matches nothing as a glob.
+
+Both files now exist side by side, and `test/hooks.test.ts` validates each against its own
+schema, including asserting an IDE hook does not contain regex syntax in its glob. The
+prompts are near-duplicates, which is a real drift risk; they are kept in sync by hand and
+that is worth revisiting if a third surface appears.
+
+Still unresolved: whether the restored `.kiro.hook` actually fires, and why the MCP server
+did not register. Both need another live IDE run after a window reload.

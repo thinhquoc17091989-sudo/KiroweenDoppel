@@ -11,6 +11,7 @@ import { join } from 'node:path';
  */
 const HOOKS_DIR = join(process.cwd(), '.kiro', 'hooks');
 const files = readdirSync(HOOKS_DIR).filter((f) => f.endsWith('.json'));
+const ideHooks = readdirSync(HOOKS_DIR).filter((f) => f.endsWith('.kiro.hook'));
 
 describe('hook files', () => {
   it('found at least one hook file to check', () => {
@@ -51,6 +52,46 @@ describe('hook files', () => {
             expect(() => new RegExp(h.matcher)).not.toThrow();
           }
         }
+      });
+    });
+  }
+});
+
+/**
+ * Kiro has TWO hook schemas for two surfaces, and they are not interchangeable:
+ *   - the IDE reads `*.kiro.hook`  -> { when: {type,patterns}, then: {type,prompt} }
+ *   - the CLI reads `*.json`       -> { version:"v1", hooks:[{trigger,matcher,action}] }
+ * This project needs both. It learned that the hard way: the .kiro.hook file was deleted
+ * and "corrected" to the CLI schema from the docs, after which the IDE silently stopped
+ * firing the hook at all — the rename landed, no code regenerated, and nothing complained.
+ */
+describe('IDE hook files (*.kiro.hook)', () => {
+  it('at least one exists, so the IDE has a hook to fire', () => {
+    expect(ideHooks.length, 'no *.kiro.hook file: the Kiro IDE will not fire anything').toBeGreaterThan(0);
+  });
+
+  for (const file of ideHooks) {
+    describe(file, () => {
+      const hook = JSON.parse(readFileSync(join(HOOKS_DIR, file), 'utf8'));
+
+      it('uses the IDE when/then schema, not the CLI one', () => {
+        expect(hook.when, 'missing "when": this looks like the CLI schema in an IDE file').toBeDefined();
+        expect(hook.then, 'missing "then"').toBeDefined();
+        expect(hook.hooks, 'has a "hooks" array: that is the CLI schema, wrong file type').toBeUndefined();
+      });
+
+      it('is enabled and watches architecture files with a glob (not a regex)', () => {
+        expect(hook.enabled).toBe(true);
+        expect(hook.when.type).toBe('fileEdited');
+        expect(Array.isArray(hook.when.patterns)).toBe(true);
+        // IDE patterns are globs; a regex like "architecture/.*\.puml$" silently matches nothing.
+        for (const p of hook.when.patterns) expect(p).not.toContain('.*');
+      });
+
+      it('asks the agent to do something', () => {
+        expect(hook.then.type).toBe('askAgent');
+        expect(typeof hook.then.prompt).toBe('string');
+        expect(hook.then.prompt.length).toBeGreaterThan(40);
       });
     });
   }

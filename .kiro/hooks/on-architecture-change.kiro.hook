@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "On architecture change",
+  "description": "When an approved architecture file is saved, generate or update code, tests and trace links for the changed elements only, then check for drift.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["architecture/*.puml"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "An approved architecture file under architecture/ changed. Read .kiro/steering/architecture.md and the changed file. For each approved element that is new or whose block changed, generate or update src/<element-id>.ts and test/<element-id>.test.ts. Do not touch unchanged elements. After writing each element's files, run `node mcp/update-trace.mjs <element-id>` to record it in trace.json -- never hand-write or edit a row yourself, the hash has to come from that script, not a guess. Then call the check_drift MCP tool and fix anything it reports; `node mcp/check-drift.mjs` is the same check from the command line if the tool is unavailable."
+  }
+}
