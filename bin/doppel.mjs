@@ -8,6 +8,11 @@
  * Conflating the two is the obvious bug here — Vite would look for index.html in the user's
  * repo and fail, or the API would serve Doppel's own sample instead of their architecture.
  *
+ * Commands:
+ *   doppel          serve the review page for this project
+ *   doppel init     scaffold this project so Kiro knows about Doppel here (steering, hook,
+ *                   MCP registration). Run this once in a new project before serving.
+ *
  * Flags:
  *   --port <n>   port to listen on (default 5173, falls forward if taken)
  *   --no-open    don't launch a browser
@@ -19,6 +24,7 @@ import { dirname, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { doppelDevApi } from '../dev/api-plugin.mjs';
+import { reportInit, runInit } from './init.mjs';
 
 const PACKAGE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -30,6 +36,11 @@ function arg(name, fallback) {
 const projectRoot = resolve(arg('--root', process.cwd()));
 const port = Number(arg('--port', '5173'));
 const open = !process.argv.includes('--no-open');
+
+if (process.argv[2] === 'init') {
+  reportInit(runInit(projectRoot, PACKAGE_DIR));
+  process.exit(0);
+}
 
 if (projectRoot === PACKAGE_DIR) {
   console.log('Doppel: running against its own repository.');

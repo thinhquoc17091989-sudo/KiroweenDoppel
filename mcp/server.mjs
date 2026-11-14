@@ -17,7 +17,8 @@
  * Register in .kiro/settings/mcp.json; see that file for the exact block.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -27,6 +28,18 @@ import { computeStatus, emptyTrace, isApprovedArchitectureFile, orphanRows, pars
 // The project root. Kiro launches the server with cwd set to the workspace; DOPPEL_ROOT
 // overrides that for anyone running it from somewhere else.
 const ROOT = process.env.DOPPEL_ROOT || process.cwd();
+
+/**
+ * How the agent should invoke update-trace.mjs from the project it is working in. Doppel
+ * often does not live inside that project (installed as a dependency, or run from a clone
+ * elsewhere), so a bare "mcp/update-trace.mjs" is only right inside Doppel's own repo —
+ * telling an agent to run a path that does not resolve is worse than saying nothing.
+ */
+const UPDATE_TRACE_CMD = (() => {
+  const abs = join(dirname(fileURLToPath(import.meta.url)), 'update-trace.mjs');
+  const rel = relative(ROOT, abs).split('\\').join('/');
+  return `node ${rel.startsWith('..') ? abs.split('\\').join('/') : rel}`;
+})();
 
 function loadArchitecture() {
   const dir = join(ROOT, 'architecture');
@@ -88,7 +101,7 @@ server.registerTool(
       lines.push('', `${orphans.length} orphaned trace row(s) (element no longer in the architecture):`);
       for (const r of orphans) lines.push(`  - ${r.id} — ${r.codePath}`);
     }
-    lines.push('', 'To fix: regenerate or update the named files, then run `node mcp/update-trace.mjs <element-id>` for each. Never hand-write a trace.json hash.');
+    lines.push('', `To fix: regenerate or update the named files, then run \`${UPDATE_TRACE_CMD} <element-id>\` for each. Never hand-write a trace.json hash.`);
     return text(lines.join('\n'));
   },
 );
