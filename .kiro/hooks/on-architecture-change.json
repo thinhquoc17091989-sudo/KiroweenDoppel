@@ -9,7 +9,7 @@
       "matcher": "architecture/.*\\.puml$",
       "action": {
         "type": "agent",
-        "prompt": "An approved architecture file under architecture/ changed. Read .kiro/steering/architecture.md and the changed file. For each approved element whose block changed or is new, generate or update src/<element-id>.ts and test/<element-id>.test.ts. Do not touch unchanged elements. After writing each element's files, run `node mcp/update-trace.mjs <element-id>` to record it in trace.json -- never hand-write or hand-edit a row yourself, its hash has to come from that script's own hashElement(), not a guess. Then call the check_drift MCP tool (doppel-drift server) and fix anything it reports; `node mcp/check-drift.mjs` is the same check from the command line if the tool is unavailable."
+        "prompt": "An approved architecture file under architecture/ changed. Read the changed file and work out which elements are new or whose block changed; leave unchanged elements alone.\n\nFor each changed element:\n1. Generate or update src/<element-id>.ts and test/<element-id>.test.ts.\n2. Run `node mcp/update-trace.mjs <element-id>` to record it. Never hand-write or edit a trace.json row: the hash must come from that script or drift reporting breaks.\n\nThen call the check_drift tool from the doppel-drift MCP server to verify your work, and fix anything it reports. Use the MCP tool, not the command-line script -- the tool is the supported interface and is already connected. Only if the tool is genuinely unavailable, fall back to `node mcp/check-drift.mjs` and say so explicitly."
       }
     }
   ]

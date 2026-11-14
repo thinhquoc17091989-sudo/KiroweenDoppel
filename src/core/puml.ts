@@ -4,6 +4,7 @@
  * Supported lines (anything else is dropped on parse, see design.md):
  *   @startuml <title> / @enduml
  *   ' id: <id>        ' req: R1, R2        ' status: proposed|approved|modified   (apply to the next element)
+ *   ' desc: free text, one line (apply to the next element; shown in the review UI)
  *   component "Name" as Alias     interface "Name" as Alias     (quotes and alias optional)
  *   A --> B : label               A ..> B : label               (..> = proposed link)
  *   note right of A : one line
@@ -17,7 +18,7 @@ import type { Element, ElementKind, Model, NoteSide, Status } from './model.ts';
 const RE_ELEMENT = /^(component|interface)\s+(?:"([^"]*)"|(\S+))(?:\s+as\s+(\w+))?\s*$/;
 const RE_LINK = /^(\w+)\s+(-->|\.\.>)\s+(\w+)\s*(?::\s*(.*?))?\s*$/;
 const RE_NOTE_HEAD = /^note\s+(right|left|top|bottom)\s+of\s+(\w+)\s*(?::\s*(.*?))?\s*$/;
-const RE_META = /^'\s*(id|req|status)\s*:\s*(.*?)\s*$/;
+const RE_META = /^'\s*(id|req|status|desc)\s*:\s*(.*?)\s*$/;
 
 export function aliasOf(name: string): string {
   const a = name.replace(/[^A-Za-z0-9_]+/g, '');
@@ -32,7 +33,7 @@ export function idOf(alias: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-interface Pending { id?: string; req?: string[]; status?: Status }
+interface Pending { id?: string; req?: string[]; status?: Status; desc?: string }
 interface RawNote { target: string; side: NoteSide; lines: string[] }
 
 export function parse(text: string): Model {
@@ -71,6 +72,7 @@ export function parse(text: string): Model {
       if (key === 'id') pending.id = value;
       else if (key === 'req') pending.req = value.split(',').map((s) => s.trim()).filter(Boolean);
       else if (key === 'status' && (value === 'proposed' || value === 'approved' || value === 'modified')) pending.status = value;
+      else if (key === 'desc') pending.desc = value;
       continue;
     }
 
@@ -83,6 +85,7 @@ export function parse(text: string): Model {
         id: pending.id ?? idOf(alias),
         kind, name, alias,
         req: pending.req ?? [],
+        desc: pending.desc ?? '',
         status: pending.status ?? 'approved',
       };
       model.elements.push(el);
@@ -127,6 +130,10 @@ export function print(model: Model): string {
     out.push(`' id: ${e.id}`);
     if (e.req.length) out.push(`' req: ${e.req.join(', ')}`);
     if (e.status !== 'approved') out.push(`' status: ${e.status}`);
+    // A description is always single-line: parse() splits input by line before this comment
+    // is ever read, and the review UI edits it through a single-line field, so e.desc can
+    // never itself contain a newline that would need collapsing before printing.
+    if (e.desc) out.push("' desc: " + e.desc);
     out.push(`${e.kind} ${q(e.name)} as ${e.alias}`);
   }
 

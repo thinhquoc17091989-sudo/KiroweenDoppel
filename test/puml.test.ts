@@ -27,6 +27,23 @@ describe('parse', () => {
     ] }]);
   });
 
+  it('reads a description and leaves it off elements that have none', () => {
+    const m = parse(
+      "@startuml\n' id: a\n' desc: shown in the review sidebar\ncomponent \"A\" as A\n" +
+      "' id: b\ncomponent \"B\" as B\n@enduml",
+    );
+    expect(m.elements[0]).toMatchObject({ id: 'a', desc: 'shown in the review sidebar' });
+    expect(m.elements[1]).toMatchObject({ id: 'b', desc: '' });
+  });
+
+  it('round-trips a description through print, including one containing a colon', () => {
+    const once = print(parse(
+      "@startuml\n' id: a\n' desc: reads like: this, with punctuation.\ncomponent \"A\" as A\n@enduml",
+    ));
+    expect(once).toContain("' desc: reads like: this, with punctuation.");
+    expect(print(parse(once))).toBe(once);
+  });
+
   it('derives id and alias when they are missing', () => {
     const m = parse('@startuml\ncomponent "Pump Driver"\ncomponent Foo\nPumpDriver --> Foo\n@enduml');
     expect(m.elements[0]).toMatchObject({ id: 'pump-driver', alias: 'PumpDriver', name: 'Pump Driver' });
@@ -71,6 +88,11 @@ const arbModel: fc.Arbitrary<Model> = fc
           name: fc.oneof(fc.constant(alias), label),
           alias: fc.constant(alias),
           req,
+          // Reuses `label`'s shape (trimmed, no leading/trailing space) rather than a raw
+          // string: RE_META trims trailing whitespace on parse, so anything that wouldn't
+          // survive a trim would fail round-trip for a reason that has nothing to do with
+          // description support itself.
+          desc: fc.oneof(fc.constant(''), label),
           status,
         }) as fc.Arbitrary<Element>,
       ),

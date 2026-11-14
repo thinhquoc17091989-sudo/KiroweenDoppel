@@ -11,35 +11,109 @@
     <div class="brand"><b>Doppel</b><span>you draw the architecture, Kiro writes the code and keeps it honest</span></div>
     <div class="spacer"></div>
     <span class="srcTag" title="Which file this page is showing. A bundled sample is never silently passed off as your project.">reading <b id="source">…</b></span>
-    <button id="btnCompare" class="ghost" title="Show the last-approved architecture beside this proposal, to check them in parallel">Compare with approved</button>
+    <button id="btnCompare" class="ghost" title="Show the last-approved architecture beside this proposal">Compare</button>
+    <button id="btnRoute" class="ghost" title="Switch between curved links and right-angle (elbow) links. Both route around boxes.">Links: free</button>
     <button id="btnArrange" class="ghost" title="Re-place every element automatically">Arrange</button>
-    <button id="btnReset" class="ghost" title="Reload the sample proposals">Reset sample</button>
-    <button id="btnApprove" class="primary" title="Write the approved elements as architecture/*.puml">Approve architecture</button>
+    <button id="btnReset" class="ghost" title="Reload from the project">Reload</button>
+    <button id="btnApprove" class="primary" title="Approves everything still pending and writes it as architecture/*.puml. Edit the diagram first to change what gets approved.">Approve architecture</button>
   </header>
+
+  <div id="proposalBanner" hidden>
+    <span class="dot"></span>
+    <span id="proposalText">Kiro proposed a change</span>
+    <button id="btnLoadProposal" class="primary">Review it</button>
+    <button id="btnDismissBanner" class="ghost">Later</button>
+  </div>
+
   <main>
-    <section id="canvasWrap">
-      <div class="diagramPane" id="paneProposal">
-        <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
-        <div id="legend">
-          <span><i class="sw dashed"></i>proposed</span>
-          <span><i class="sw solid"></i>approved</span>
-          <span><i class="sw iface"></i>interface</span>
-          <span class="hint">drag to place · double-click to rename</span>
+    <!-- left: every architecture file in the project, grouped by whether it is approved -->
+    <nav id="tree">
+      <div class="treeHead">
+        <span class="t">Architecture</span>
+        <span class="seg" id="groupMode">
+          <button type="button" class="on" data-mode="feature">Feature</button>
+          <button type="button" data-mode="folder">Folder</button>
+        </span>
+      </div>
+
+      <!-- Approving is never a guess: this is the exact path it will write, and clicking
+           it changes that path. -->
+      <div class="crumbBar" id="crumbBar">
+        <span class="lbl">Approve writes to</span>
+        <button type="button" id="crumbPath" title="Click to change where Approve writes"></button>
+      </div>
+
+      <div id="treeBody"></div>
+
+      <div class="treeLegend">
+        <span><i class="ic app"></i>approved</span>
+        <span><i class="ic gen"></i>generated</span>
+        <span><i class="ic stale"></i>stale</span>
+        <span><i class="ic prop"></i>under review</span>
+      </div>
+      <div class="layoutFoot" id="layoutFoot"></div>
+    </nav>
+
+    <section class="centre">
+      <div id="tabbar"></div>
+      <div id="canvasWrap">
+        <div class="diagramPane" id="paneProposal">
+          <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div id="legend">
+            <span><i class="sw dashed"></i>proposed</span>
+            <span><i class="sw solid"></i>approved</span>
+            <span><i class="sw iface"></i>interface</span>
+            <span class="hint">drag to place · double-click to rename</span>
+          </div>
+          <div class="paneEmpty" id="canvasEmpty" hidden></div>
+        </div>
+        <div class="diagramPane" id="paneApproved" hidden>
+          <div class="paneLabel">Approved architecture (previous)</div>
+          <svg id="canvasApproved" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="paneEmpty" id="approvedEmpty"></div>
         </div>
       </div>
-      <div class="diagramPane" id="paneApproved" hidden>
-        <div class="paneLabel">Approved architecture (previous)</div>
-        <svg id="canvasApproved" xmlns="http://www.w3.org/2000/svg"></svg>
-        <div class="paneEmpty" id="approvedEmpty"></div>
+      <div id="statusbar">
+        <span id="statElements">—</span>
+        <span class="sep">·</span>
+        <span id="statPending">—</span>
+        <span class="sep">·</span>
+        <span id="statFile">—</span>
       </div>
     </section>
+
     <aside>
-      <h2>Proposals <em id="countProposed"></em></h2>
-      <ul id="listProposed" class="elements"></ul>
-      <h2>Approved <em id="countApproved"></em></h2>
-      <ul id="listApproved" class="elements"></ul>
-      <h2>PlantUML <small>live</small></h2>
-      <pre id="puml"></pre>
+      <div id="readonlyNote" hidden>
+        This file is approved architecture, shown read&#8209;only. Open the proposals file to accept or reject changes.
+      </div>
+      <div class="panelTabs">
+        <button id="tabInspector" class="ptab on" type="button">Inspector</button>
+        <button id="tabPuml" class="ptab" type="button">PlantUML</button>
+      </div>
+
+      <!-- Sits outside the scrolling body on purpose: on a long model the search and the
+           status filters must never scroll away from the list they control. -->
+      <div class="filterBar" id="filterBar">
+        <div class="searchWrap">
+          <span class="mag">&#9906;</span>
+          <input id="filterText" type="text" placeholder="Filter elements…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="pills" id="filterPills">
+          <button class="pill on" type="button" data-status="all">All <i></i></button>
+          <button class="pill" type="button" data-status="proposed">Proposed <i></i></button>
+          <button class="pill" type="button" data-status="modified">Modified <i></i></button>
+          <button class="pill" type="button" data-status="approved">Approved <i></i></button>
+        </div>
+      </div>
+
+      <div id="inspectorBody" class="panelBody">
+        <div id="elementList"></div>
+        <div id="elementDetail" class="detail" hidden></div>
+      </div>
+
+      <div id="pumlBody" class="panelBody" hidden>
+        <pre id="puml"></pre>
+      </div>
     </aside>
   </main>
   <div id="toast"></div>

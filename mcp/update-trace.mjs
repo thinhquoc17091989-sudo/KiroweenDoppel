@@ -11,11 +11,12 @@
  * from the real one would make check-drift.mjs report every element as stale forever,
  * which is worse than no trace row at all.
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { emptyTrace, hashElement, isApprovedArchitectureFile, parseTrace, pathsFor, printTrace, upsertRow } from '../src/core/trace.ts';
+import { readArchitectureFiles } from './arch-files.mjs';
+import { emptyTrace, hashElement, parseTrace, pathsFor, printTrace, upsertRow } from '../src/core/trace.ts';
 
 /**
  * @param {string} elementId
@@ -27,10 +28,9 @@ export function recordGeneration(elementId, opts = {}) {
   const archDir = join(root, 'architecture');
   const tracePath = join(root, 'trace.json');
 
-  const files = existsSync(archDir) ? readdirSync(archDir).filter(isApprovedArchitectureFile) : [];
   let found;
-  for (const f of files) {
-    const e = parsePuml(readFileSync(join(archDir, f), 'utf8')).elements.find((x) => x.id === elementId);
+  for (const f of readArchitectureFiles(archDir)) {
+    const e = parsePuml(f.text).elements.find((x) => x.id === elementId);
     if (e) { found = e; break; }
   }
   if (!found) return { ok: false, error: `No element with id "${elementId}" found in architecture/*.puml` };

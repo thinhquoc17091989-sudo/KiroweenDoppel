@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — Tree C, decluttered</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --gen:#2a6fb8; --stale:#b7791f;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 12px; padding: 0 16px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  .spacer { flex: 1; }
+  button.primary { font: 700 12.5px var(--sans); padding: 9px 14px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+
+  main { display: flex; height: calc(100vh - 52px); }
+  nav { width: 290px; flex: 0 0 290px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+
+  .treeHead { padding: 11px 14px 9px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+  .treeHead .t { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .seg { margin-left: auto; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg button { background: transparent; border: 0; color: var(--muted); font: 600 10px var(--sans); padding: 4px 8px; cursor: pointer; }
+  .seg button.on { background: rgba(255,122,26,.16); color: #ffb77a; }
+
+  .crumbBar { padding: 9px 14px; border-bottom: 1px solid var(--line); background: rgba(255,122,26,.06); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .crumbBar .lbl { color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; width: 100%; margin-bottom: 2px; }
+  .crumb { font: 11.5px var(--mono); color: #ffb77a; }
+  .crumbSep { color: #6b7488; font-size: 10px; }
+
+  .treeBody { flex: 1; min-height: 0; overflow: auto; padding-bottom: 10px; }
+  .feat { display: flex; align-items: center; gap: 7px; width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; color: #e6e9f0; font: 700 12.5px var(--sans); padding: 10px 14px 6px; }
+  .feat:hover { background: var(--panel2); }
+  .feat .chev { font-size: 8px; color: #6b7488; width: 8px; }
+  .feat .ct { margin-left: auto; font: 10px var(--mono); color: #6b7488; font-weight: 500; }
+  .feat .warn { font: 9.5px var(--sans); color: #f0c382; font-weight: 600; }
+
+  .file { display: flex; align-items: center; gap: 8px; width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; color: #cfd5e3; font: 500 12.5px var(--sans); padding: 5px 14px 5px 28px; border-left: 2px solid transparent; }
+  .file:hover { background: var(--panel2); }
+  .file.on { background: rgba(255,122,26,.12); border-left-color: var(--accent); color: #fff; }
+  .file.target { border-left-color: var(--accent); background: rgba(255,122,26,.07); }
+  .file .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* One job per place: the dot says what state the file is in, the tag says what kind of
+     diagram it is. Nothing repeats, so a healthy row carries exactly two marks. */
+  .ic { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 7px; }
+  .ic.app { background: var(--approved); border-radius: 2px; }
+  .ic.gen { background: var(--gen); }
+  .ic.stale { background: var(--stale); }
+  .ic.prop { background: var(--proposed); border-radius: 2px; }
+  .kindTag { font: 9.5px var(--mono); color: #656d80; }
+  .tag.writing { color: #ffb77a; font: 600 9.5px var(--sans); }
+  .tag.pending { color: #8d96ab; font: 9.5px var(--mono); }
+
+  .legend { border-top: 1px solid var(--line); padding: 9px 14px 6px; display: flex; flex-wrap: wrap; gap: 9px; font-size: 10px; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .layoutFoot { padding: 2px 14px 10px; font-size: 10.5px; color: #6b7488; }
+  .layoutFoot code { font-family: var(--mono); color: #7fa8c4; }
+
+  .canvas { flex: 1; background: #12151c; padding: 28px 32px; color: var(--muted); font-size: 13px; line-height: 1.7; overflow: auto; }
+  .canvas h3 { color: #cfd5e3; font-size: 13px; margin: 0 0 10px; }
+  .canvas h3:not(:first-child) { margin-top: 22px; }
+  .canvas ul { margin: 0; padding-left: 18px; }
+  .canvas b { color: #ffb77a; font-weight: 600; }
+  .canvas code { font-family: var(--mono); font-size: 12px; color: #9fd0f0; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup C, decluttered — <b>no extensions, one status dot, kind tag kept</b></div>
+    <div class="spacer"></div>
+    <button class="primary">Approve into Irrigation</button>
+  </header>
+
+  <main>
+    <nav>
+      <div class="treeHead">
+        <span class="t">Architecture</span>
+        <span class="seg"><button class="on">Feature</button><button>Folder</button></span>
+      </div>
+
+      <div class="crumbBar">
+        <span class="lbl">Approve writes to</span>
+        <span class="crumb">architecture</span><span class="crumbSep">&rsaquo;</span>
+        <span class="crumb">irrigation</span><span class="crumbSep">&rsaquo;</span>
+        <span class="crumb">irrigation.puml</span>
+      </div>
+
+      <div class="treeBody">
+        <button class="feat"><span class="chev">&#9660;</span><span>Sensing</span><span class="warn">1 stale</span><span class="ct">3</span></button>
+        <button class="file" title="architecture/sensing/sensing.puml"><span class="ic app"></span><span class="nm">sensing</span><span class="kindTag">static</span></button>
+        <button class="file" title="architecture/sensing/moisture-sensor.state.puml"><span class="ic gen"></span><span class="nm">MoistureSensor</span><span class="kindTag">state</span></button>
+        <button class="file" title="architecture/sensing/calibration.seq.puml — stale"><span class="ic stale"></span><span class="nm">calibration</span><span class="kindTag">seq</span></button>
+
+        <button class="feat"><span class="chev">&#9660;</span><span>Irrigation</span><span class="warn">1 stale</span><span class="ct">4</span></button>
+        <button class="file target" title="architecture/irrigation/irrigation.puml"><span class="ic prop"></span><span class="nm">irrigation</span><span class="tag writing">writing here</span></button>
+        <button class="file" title="architecture/irrigation/watering-cycle.seq.puml"><span class="ic gen"></span><span class="nm">watering-cycle</span><span class="kindTag">seq</span></button>
+        <button class="file" title="architecture/irrigation/pump-driver.state.puml"><span class="ic gen"></span><span class="nm">PumpDriver</span><span class="kindTag">state</span></button>
+        <button class="file" title="architecture/irrigation/daily-schedule.activity.puml — stale"><span class="ic stale"></span><span class="nm">daily-schedule</span><span class="kindTag">activity</span></button>
+
+        <button class="feat"><span class="chev">&#9660;</span><span>Telemetry</span><span class="ct">2</span></button>
+        <button class="file" title="architecture/telemetry/telemetry.puml"><span class="ic app"></span><span class="nm">telemetry</span><span class="kindTag">static</span></button>
+        <button class="file" title="architecture/telemetry/alert-escalation.seq.puml"><span class="ic gen"></span><span class="nm">alert-escalation</span><span class="kindTag">seq</span></button>
+
+        <button class="feat"><span class="chev">&#9660;</span><span>System</span><span class="ct">1</span></button>
+        <button class="file" title="architecture/plant-watering.puml"><span class="ic app"></span><span class="nm">plant-watering</span><span class="kindTag">static</span></button>
+
+        <button class="feat"><span class="chev">&#9660;</span><span>Under review</span><span class="ct">1</span></button>
+        <button class="file on" title="proposals.puml"><span class="ic prop"></span><span class="nm">proposals</span><span class="tag pending">6 pending</span></button>
+      </div>
+
+      <div class="legend">
+        <span><i class="ic app"></i>approved</span>
+        <span><i class="ic gen"></i>generated</span>
+        <span><i class="ic stale"></i>stale</span>
+        <span><i class="ic prop"></i>under review</span>
+      </div>
+      <div class="layoutFoot">Layout shared via <code>.doppel/layout/</code></div>
+    </nav>
+
+    <div class="canvas">
+      <h3>What changed from the first C</h3>
+      <ul>
+        <li><b>No <code>.puml</code> anywhere.</b> Every file in this tree is a .puml, so the extension distinguishes nothing and costs width in a 290px panel. The full path is still the row's tooltip, and the breadcrumb at the top still shows the real filename being written.</li>
+        <li><b>The dot stays a plain status dot.</b> It is not asked to encode the diagram kind as well, so there is nothing new to learn: green approved, blue generated, amber stale, purple under review.</li>
+        <li><b>Kind tags stay</b> on the right, in one muted colour rather than a different colour each. They name the dialect without competing with the file name.</li>
+        <li><b>The separate "stale" word is gone.</b> It repeated what the amber dot already said, and the feature header still counts them, so a drifted file is visible from the collapsed header.</li>
+        <li>The result: a healthy row carries exactly two marks, a dot and a tag. Only the approve target and the proposals file say anything more.</li>
+      </ul>
+
+      <h3>Still open</h3>
+      <ul>
+        <li>Today the tree only groups approved versus proposals with no nesting, and Approve hardcodes <code>architecture/&lt;title&gt;.puml</code> with no subfolder. Both need real work before this view is live.</li>
+        <li>Layout moves out of browser storage into <code>.doppel/layout/</code>, committed, keyed by element id and written sorted so concurrent edits merge.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

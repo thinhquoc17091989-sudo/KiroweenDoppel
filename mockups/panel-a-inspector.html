@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — Panel A: Inspector</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --iface:#2a6fb8;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  main { display: flex; height: calc(100vh - 52px); }
+  .canvas { flex: 1; background: #12151c; position: relative; }
+  .canvas svg { width: 100%; height: 100%; }
+  .caption { position: absolute; bottom: 14px; left: 20px; font-size: 12px; color: var(--muted); }
+  .caption b { color: #cfd5e3; }
+
+  aside { width: 320px; flex: 0 0 320px; background: var(--panel); border-left: 1px solid var(--line); overflow: auto; display: flex; flex-direction: column; }
+
+  /* -- nothing selected state -- */
+  .browseList { padding: 14px; }
+  .browseList h2 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); margin-bottom: 6px; cursor: pointer; }
+  .row:hover { border-color: #4a5570; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+  .dot.proposed { background: var(--proposed); }
+  .dot.approved { background: var(--approved); }
+  .dot.modified { background: var(--modified); }
+  .row .name { font-weight: 600; font-size: 13px; flex: 1; }
+  .row .kind { font-size: 10.5px; color: var(--muted); font-family: var(--mono); }
+  .hint { font-size: 11.5px; color: var(--muted); padding: 10px 14px; border-top: 1px dashed var(--line); }
+
+  /* -- inspector (selected) state -- */
+  .inspector { padding: 16px; display: none; flex-direction: column; gap: 14px; }
+  .inspector.active { display: flex; }
+  .browseList.inactive { display: none; }
+  .backRow { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .backRow:hover { color: #cfd5e3; }
+  .iHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .iName { font-size: 18px; font-weight: 700; }
+  .badge { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 5px; }
+  .badge.proposed { background: rgba(122,75,214,.22); color: #c6a8f5; }
+  .badge.modified { background: rgba(183,121,31,.22); color: #f0c382; }
+  .badge.approved { background: rgba(31,111,74,.22); color: #9fe0b8; }
+  .iMeta { font-size: 11.5px; color: var(--muted); font-family: var(--mono); }
+  .iReq { display: flex; gap: 6px; flex-wrap: wrap; }
+  .iReq span { font-size: 10.5px; font-family: var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; color: #cfd5e3; }
+
+  label.field { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+  textarea.descBox { width: 100%; min-height: 70px; background: #12151c; border: 1px solid var(--line); border-radius: 7px; color: #e6e9f0; font: 12.5px/1.5 var(--sans); padding: 8px 10px; resize: vertical; }
+  textarea.descBox:focus { outline: none; border-color: var(--accent); }
+
+  .linkGroup h3 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .linkRow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .linkRow:first-of-type { border-top: 0; }
+  .arrow { color: var(--muted); font-family: var(--mono); }
+  .linkRow .target { font-weight: 600; cursor: pointer; }
+  .linkRow .target:hover { color: var(--accent); }
+  .linkRow .label { color: var(--muted); font-size: 11px; }
+
+  .footerApprove { padding: 14px; border-top: 1px solid var(--line); }
+  button.primary { width: 100%; font: 700 12.5px var(--sans); padding: 11px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup A — the panel becomes an <b>inspector</b>: a flat list until you select something, then full detail for just that one element.</div>
+  </header>
+  <main>
+    <div class="canvas">
+      <svg viewBox="0 0 600 400">
+        <rect x="40" y="60" width="150" height="56" rx="6" fill="#242938" stroke="#7a4bd6" stroke-width="2"/>
+        <text x="115" y="94" fill="#e6e9f0" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="600">Scheduler</text>
+        <path d="M190,88 L320,88" stroke="#7a4bd6" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+        <rect x="320" y="60" width="170" height="56" rx="6" fill="#2a3450" stroke="#ff7a1a" stroke-width="2.5"/>
+        <text x="405" y="88" fill="#e6e9f0" font-family="sans-serif" font-size="13" text-anchor="middle" font-weight="700">WateringController</text>
+        <text x="405" y="104" fill="#ffb77a" font-family="sans-serif" font-size="9" text-anchor="middle">selected</text>
+        <path d="M490,88 L560,88" stroke="#7a4bd6" stroke-width="1.6" fill="none" marker-end="url(#a)"/>
+        <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#7a4bd6"/></marker></defs>
+      </svg>
+      <div class="caption">Clicked <b>WateringController</b> on the canvas &mdash; the panel on the right now shows just that element.</div>
+    </div>
+    <aside>
+      <div class="browseList inactive">
+        <h2>Elements <em style="color:#ff7a1a">3 pending</em></h2>
+        <div class="row"><span class="dot proposed"></span><span class="name">Scheduler</span><span class="kind">component</span></div>
+        <div class="row"><span class="dot modified"></span><span class="name">WateringController</span><span class="kind">component</span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">PumpDriver</span><span class="kind">component</span></div>
+      </div>
+      <div class="hint inactive" style="display:none">Select an element on the canvas or in this list to see its detail.</div>
+
+      <div class="inspector active">
+        <div class="backRow">&larr; back to list</div>
+        <div class="iHead">
+          <div>
+            <div class="iName">WateringController</div>
+            <div class="iMeta">id: watering-controller</div>
+          </div>
+          <span class="badge modified">modified</span>
+        </div>
+        <div class="iReq"><span>REQ-12</span><span>REQ-14</span></div>
+
+        <div>
+          <label class="field">Description</label>
+          <textarea class="descBox">Coordinates sensor readings with pump timing; decides when a watering cycle actually runs.</textarea>
+        </div>
+
+        <div class="linkGroup">
+          <h3>Connections</h3>
+          <div class="linkRow"><span class="arrow">&larr;</span><span class="target">Scheduler</span><span class="label">triggers</span></div>
+          <div class="linkRow"><span class="arrow">&rarr;</span><span class="target">PumpDriver</span><span class="label">drives</span></div>
+        </div>
+      </div>
+
+      <div class="footerApprove">
+        <button class="primary">Approve architecture</button>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

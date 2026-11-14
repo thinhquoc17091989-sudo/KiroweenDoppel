@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — Tree A: the folders as they are on disk</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --iface:#2a6fb8;
+    --gen:#2a6fb8; --stale:#b7791f;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 12px; padding: 0 16px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  .spacer { flex: 1; }
+  /* the button says where it will write, so approving is never a guess */
+  .approveWrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  button.primary { font: 700 12.5px var(--sans); padding: 9px 14px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+  .dest { font: 10.5px var(--mono); color: #ffb77a; }
+
+  main { display: flex; height: calc(100vh - 52px); }
+
+  nav { width: 280px; flex: 0 0 280px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .treeHead { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 12px 14px 8px; display: flex; align-items: center; gap: 7px; }
+  .treeHead .spacer { flex: 1; }
+  .treeHead button { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 5px; font: 600 10px var(--sans); padding: 2px 6px; cursor: pointer; }
+  .treeBody { flex: 1; min-height: 0; overflow: auto; padding-bottom: 12px; }
+
+  .fold, .file { display: flex; align-items: center; gap: 6px; width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; color: #cfd5e3; font: 500 12.5px var(--sans); padding: 5px 14px; border-left: 2px solid transparent; }
+  .fold:hover, .file:hover { background: var(--panel2); }
+  .file.on { background: rgba(255,122,26,.12); border-left-color: var(--accent); color: #fff; }
+  .chev { font-size: 8px; color: #6b7488; width: 8px; flex: 0 0 8px; }
+  .fold .nm { font-weight: 600; }
+  .fold .ct { margin-left: auto; font: 10px var(--mono); color: #6b7488; }
+  .file .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d1 { padding-left: 26px; } .d2 { padding-left: 40px; } .d3 { padding-left: 54px; }
+
+  .ic { width: 7px; height: 7px; border-radius: 2px; flex: 0 0 7px; }
+  .ic.app { background: var(--approved); }
+  .ic.gen { background: var(--gen); border-radius: 50%; }
+  .ic.stale { background: var(--stale); border-radius: 50%; }
+  .ic.prop { background: var(--proposed); }
+  .tag { font: 9.5px var(--mono); color: #6b7488; }
+  .tag.stale { color: #f0c382; }
+
+  /* where Approve will land, drawn in the tree itself at the exact path */
+  .ghost { display: flex; align-items: center; gap: 6px; margin: 3px 10px 3px 26px; padding: 5px 8px; border: 1px dashed var(--accent); border-radius: 6px; background: rgba(255,122,26,.07); font: 600 12px var(--sans); color: #ffb77a; }
+  .ghost .hintTag { margin-left: auto; font: 9.5px var(--sans); color: #c0845a; }
+  .ghost .chg { background: transparent; border: 0; color: var(--accent); font: 600 10px var(--sans); cursor: pointer; text-decoration: underline; }
+
+  .sectionGap { height: 10px; }
+  /* config the whole team shares, deliberately outside architecture/ */
+  .cfg { opacity: .72; }
+  .legend { border-top: 1px solid var(--line); padding: 9px 14px; font-size: 10.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 10px; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+
+  .canvas { flex: 1; background: #12151c; padding: 28px 32px; color: var(--muted); font-size: 13px; line-height: 1.7; overflow: auto; }
+  .canvas h3 { color: #cfd5e3; font-size: 13px; margin: 0 0 10px; }
+  .canvas h3:not(:first-child) { margin-top: 22px; }
+  .canvas ul { margin: 0; padding-left: 18px; }
+  .canvas b { color: #ffb77a; font-weight: 600; }
+  .canvas code { font-family: var(--mono); font-size: 12px; color: #9fd0f0; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup A — <b>the folders exactly as they are on disk</b></div>
+    <div class="spacer"></div>
+    <div class="approveWrap">
+      <button class="primary">Approve architecture</button>
+      <span class="dest">&rarr; architecture/static/irrigation.puml</span>
+    </div>
+  </header>
+
+  <main>
+    <nav>
+      <div class="treeHead"><span>Architecture</span><span class="spacer"></span><button>Collapse all</button></div>
+      <div class="treeBody">
+
+        <button class="fold"><span class="chev">&#9660;</span><span class="nm">architecture</span><span class="ct">10</span></button>
+
+        <button class="fold d1"><span class="chev">&#9660;</span><span class="nm">static</span><span class="ct">4</span></button>
+        <button class="file d2"><span class="ic app"></span><span class="nm">plant-watering.puml</span><span class="tag">12</span></button>
+        <button class="file d2"><span class="ic app"></span><span class="nm">sensing.puml</span><span class="tag">5</span></button>
+        <div class="ghost"><span class="ic prop"></span><span>irrigation.puml</span><span class="hintTag">Approve writes here</span><button class="chg">change</button></div>
+        <button class="file d2"><span class="ic app"></span><span class="nm">telemetry.puml</span><span class="tag">4</span></button>
+
+        <button class="fold d1"><span class="chev">&#9660;</span><span class="nm">dynamic</span><span class="ct">6</span></button>
+        <button class="fold d2"><span class="chev">&#9660;</span><span class="nm">sequence</span><span class="ct">3</span></button>
+        <button class="file d3"><span class="ic gen"></span><span class="nm">watering-cycle.puml</span><span class="tag">in sync</span></button>
+        <button class="file d3"><span class="ic stale"></span><span class="nm">calibration.puml</span><span class="tag stale">stale</span></button>
+        <button class="file d3"><span class="ic gen"></span><span class="nm">alert-escalation.puml</span><span class="tag">in sync</span></button>
+        <button class="fold d2"><span class="chev">&#9660;</span><span class="nm">state</span><span class="ct">2</span></button>
+        <button class="file d3"><span class="ic gen"></span><span class="nm">pump-driver.puml</span><span class="tag">in sync</span></button>
+        <button class="file d3"><span class="ic gen"></span><span class="nm">valve-driver.puml</span><span class="tag">in sync</span></button>
+        <button class="fold d2"><span class="chev">&#9660;</span><span class="nm">activity</span><span class="ct">1</span></button>
+        <button class="file d3"><span class="ic stale"></span><span class="nm">daily-schedule.puml</span><span class="tag stale">stale</span></button>
+
+        <div class="sectionGap"></div>
+        <div class="treeHead">Under review</div>
+        <button class="file on"><span class="ic prop"></span><span class="nm">proposals.puml</span><span class="tag">6 pending</span></button>
+
+        <div class="sectionGap"></div>
+        <div class="treeHead">Shared settings</div>
+        <button class="fold cfg"><span class="chev">&#9660;</span><span class="nm">.doppel</span><span class="ct">2</span></button>
+        <button class="fold cfg d1"><span class="chev">&#9660;</span><span class="nm">layout</span><span class="ct">2</span></button>
+        <button class="file cfg d2"><span class="nm">plant-watering.json</span></button>
+        <button class="file cfg d2"><span class="nm">sensing.json</span></button>
+
+      </div>
+      <div class="legend">
+        <span><i class="ic app"></i>approved</span>
+        <span><i class="ic gen"></i>generated</span>
+        <span><i class="ic stale"></i>stale</span>
+        <span><i class="ic prop"></i>under review</span>
+      </div>
+    </nav>
+
+    <div class="canvas">
+      <h3>What this one optimises for</h3>
+      <ul>
+        <li>The tree <b>is</b> the filesystem. What you see is what a teammate sees after a <code>git pull</code>, with no mapping to learn.</li>
+        <li>The destination is drawn <b>in the tree itself</b>: a dashed row sits at the exact path Approve will write, and the header button repeats it.</li>
+        <li><code>static/</code> is what you design and approve. <code>dynamic/</code> is regenerated from code after implementation, so those entries are read-only and carry a freshness mark instead of a count.</li>
+        <li>Best when the team already thinks in paths and reviews these files in pull requests.</li>
+      </ul>
+
+      <h3>Where the layout is stored</h3>
+      <ul>
+        <li>Hand-placed positions go to <code>.doppel/layout/&lt;diagram&gt;.json</code>, committed with the repo, so <b>everyone opens the diagram arranged the same way</b>.</li>
+        <li>It sits outside <code>architecture/</code> on purpose: steering feeds that whole folder to Kiro as approved design, and pixel coordinates are not design.</li>
+        <li>Keyed by element id, not by position in the file, so a rename or reorder does not scramble anyone's layout.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — Tree B: what you author vs what code generates</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --gen:#2a6fb8; --stale:#b7791f;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 12px; padding: 0 16px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  .spacer { flex: 1; }
+  button.primary { font: 700 12.5px var(--sans); padding: 9px 14px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+
+  main { display: flex; height: calc(100vh - 52px); }
+  nav { width: 290px; flex: 0 0 290px; background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+
+  /* the write destination is a control, not a label: pick the folder, then approve */
+  .destBar { padding: 10px 12px; border-bottom: 1px solid var(--line); background: rgba(255,122,26,.06); }
+  .destBar .lbl { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .destPick { display: flex; align-items: center; gap: 7px; background: #12151c; border: 1px solid var(--accent); border-radius: 6px; padding: 6px 9px; cursor: pointer; }
+  .destPick .path { font: 11.5px var(--mono); color: #ffb77a; flex: 1; }
+  .destPick .car { color: var(--accent); font-size: 9px; }
+
+  .sect { padding: 13px 14px 7px; display: flex; align-items: baseline; gap: 7px; }
+  .sect .t { font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase; font-weight: 700; }
+  .sect.design .t { color: #ffb77a; }
+  .sect.generated .t { color: #8fc0e8; }
+  .sect .sub { font-size: 10.5px; color: #6b7488; }
+  .sect .ct { margin-left: auto; font: 10px var(--mono); color: #6b7488; }
+
+  .treeBody { flex: 1; min-height: 0; overflow: auto; padding-bottom: 10px; }
+  .fold, .file { display: flex; align-items: center; gap: 7px; width: 100%; background: transparent; border: 0; text-align: left; cursor: pointer; color: #cfd5e3; font: 500 12.5px var(--sans); padding: 5px 14px; border-left: 2px solid transparent; }
+  .fold:hover, .file:hover { background: var(--panel2); }
+  .file.on { background: rgba(255,122,26,.12); border-left-color: var(--accent); color: #fff; }
+  .file.target { border-left-color: var(--accent); background: rgba(255,122,26,.07); }
+  .chev { font-size: 8px; color: #6b7488; width: 8px; flex: 0 0 8px; }
+  .fold .nm { font-weight: 600; font-size: 12px; }
+  .fold .ct { margin-left: auto; font: 10px var(--mono); color: #6b7488; }
+  .file .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d1 { padding-left: 28px; }
+  .ic { width: 7px; height: 7px; border-radius: 2px; flex: 0 0 7px; }
+  .ic.app { background: var(--approved); }
+  .ic.gen { background: var(--gen); border-radius: 50%; }
+  .ic.stale { background: var(--stale); border-radius: 50%; }
+  .ic.prop { background: var(--proposed); }
+  .tag { font: 9.5px var(--mono); color: #6b7488; }
+  .tag.stale { color: #f0c382; }
+  .tag.writing { color: #ffb77a; font-family: var(--sans); font-weight: 600; }
+  .lock { font-size: 9px; color: #5a6378; }
+
+  .genBanner { margin: 4px 12px 8px; padding: 7px 9px; border: 1px solid #3d3522; background: rgba(183,121,31,.1); border-radius: 6px; font-size: 11px; color: #f0c382; display: flex; align-items: center; gap: 8px; }
+  .genBanner button { margin-left: auto; background: transparent; border: 1px solid #6b5a2f; color: #f0c382; border-radius: 5px; font: 600 10px var(--sans); padding: 3px 7px; cursor: pointer; }
+
+  .layoutFoot { border-top: 1px solid var(--line); padding: 10px 14px; font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+  .layoutFoot code { font-family: var(--mono); color: #9fd0f0; }
+
+  .canvas { flex: 1; background: #12151c; padding: 28px 32px; color: var(--muted); font-size: 13px; line-height: 1.7; overflow: auto; }
+  .canvas h3 { color: #cfd5e3; font-size: 13px; margin: 0 0 10px; }
+  .canvas h3:not(:first-child) { margin-top: 22px; }
+  .canvas ul { margin: 0; padding-left: 18px; }
+  .canvas b { color: #ffb77a; font-weight: 600; }
+  .canvas code { font-family: var(--mono); font-size: 12px; color: #9fd0f0; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup B — <b>split by who wrote it</b>: your design above, code-generated views below</div>
+    <div class="spacer"></div>
+    <button class="primary">Approve into static/irrigation.puml</button>
+  </header>
+
+  <main>
+    <nav>
+      <div class="destBar">
+        <div class="lbl">Approve writes to</div>
+        <div class="destPick"><span class="path">architecture/static/irrigation.puml</span><span class="car">&#9660;</span></div>
+      </div>
+
+      <div class="treeBody">
+        <div class="sect design"><span class="t">Design</span><span class="sub">you approve these</span><span class="ct">4</span></div>
+        <button class="file"><span class="ic app"></span><span class="nm">plant-watering.puml</span><span class="tag">12</span></button>
+        <button class="file"><span class="ic app"></span><span class="nm">sensing.puml</span><span class="tag">5</span></button>
+        <button class="file target"><span class="ic prop"></span><span class="nm">irrigation.puml</span><span class="tag writing">writing here</span></button>
+        <button class="file"><span class="ic app"></span><span class="nm">telemetry.puml</span><span class="tag">4</span></button>
+
+        <div class="sect generated"><span class="t">Generated from code</span><span class="sub">read only</span><span class="ct">6</span></div>
+        <div class="genBanner"><span>2 are stale</span><button>Regenerate</button></div>
+
+        <button class="fold"><span class="chev">&#9660;</span><span class="nm">Sequence</span><span class="ct">3</span></button>
+        <button class="file d1"><span class="ic gen"></span><span class="nm">watering-cycle</span><span class="lock">&#128274;</span><span class="tag">in sync</span></button>
+        <button class="file d1"><span class="ic stale"></span><span class="nm">calibration</span><span class="lock">&#128274;</span><span class="tag stale">stale</span></button>
+        <button class="file d1"><span class="ic gen"></span><span class="nm">alert-escalation</span><span class="lock">&#128274;</span><span class="tag">in sync</span></button>
+
+        <button class="fold"><span class="chev">&#9660;</span><span class="nm">State</span><span class="ct">2</span></button>
+        <button class="file d1"><span class="ic gen"></span><span class="nm">pump-driver</span><span class="lock">&#128274;</span><span class="tag">in sync</span></button>
+        <button class="file d1"><span class="ic stale"></span><span class="nm">valve-driver</span><span class="lock">&#128274;</span><span class="tag stale">stale</span></button>
+
+        <button class="fold"><span class="chev">&#9660;</span><span class="nm">Activity</span><span class="ct">1</span></button>
+        <button class="file d1"><span class="ic gen"></span><span class="nm">daily-schedule</span><span class="lock">&#128274;</span><span class="tag">in sync</span></button>
+
+        <div class="sect design"><span class="t">Under review</span><span class="sub">not yet approved</span></div>
+        <button class="file on"><span class="ic prop"></span><span class="nm">proposals.puml</span><span class="tag">6 pending</span></button>
+      </div>
+
+      <div class="layoutFoot">
+        Layout shared via <code>.doppel/layout/</code> &middot; committed with the repo
+      </div>
+    </nav>
+
+    <div class="canvas">
+      <h3>What this one optimises for</h3>
+      <ul>
+        <li>The split that actually matters is <b>authored versus generated</b>. Editing a generated file by hand is always a mistake, so those carry a lock and sit in their own section.</li>
+        <li>Generated views are grouped by dialect, which is how you look for them: "show me the sequence diagrams".</li>
+        <li><b>Staleness is surfaced, not buried</b>: a banner counts the generated files that no longer match the code, with one button to regenerate them.</li>
+        <li>The write destination is a <b>control at the top</b>, not a label. Pick the target file, then approve.</li>
+        <li>Best when dynamic diagrams outnumber static ones, which is what happens once code lands.</li>
+      </ul>
+
+      <h3>Where the layout is stored</h3>
+      <ul>
+        <li><code>.doppel/layout/&lt;diagram&gt;.json</code>, committed, so the arrangement travels with the repo rather than living in one person's browser.</li>
+        <li>Never inside <code>architecture/</code>: steering hands that whole folder to Kiro as approved design.</li>
+        <li>Keys are element ids and sorted on write, so two people dragging different boxes produce a <b>small, mergeable diff</b> instead of a whole-file conflict.</li>
+      </ul>
+    </div>
+  </main>
+</body>
+</html>

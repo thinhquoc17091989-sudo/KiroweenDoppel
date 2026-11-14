@@ -15,7 +15,7 @@
  * work (see tasks.md); a line using them is simply dropped, the same policy the static
  * dialect uses for anything outside its own subset.
  */
-import { aliasOf, idOf, printMeta, quote, readMeta, stripEnvelope, type Pending, type Status } from './dsl';
+import { aliasOf, idOf, printMeta, quote, readMeta, stripEnvelope, type Pending, type Status } from './dsl.ts';
 
 export interface StateNode {
   id: string;

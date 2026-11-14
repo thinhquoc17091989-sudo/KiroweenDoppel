@@ -16,14 +16,15 @@
  *
  * Register in .kiro/settings/mcp.json; see that file for the exact block.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, isApprovedArchitectureFile, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { readArchitectureFiles } from './arch-files.mjs';
 
 // The project root. Kiro launches the server with cwd set to the workspace; DOPPEL_ROOT
 // overrides that for anyone running it from somewhere else.
@@ -42,13 +43,7 @@ const UPDATE_TRACE_CMD = (() => {
 })();
 
 function loadArchitecture() {
-  const dir = join(ROOT, 'architecture');
-  if (!existsSync(dir)) return [];
-  const elements = [];
-  for (const name of readdirSync(dir).filter(isApprovedArchitectureFile)) {
-    elements.push(...parsePuml(readFileSync(join(dir, name), 'utf8')).elements);
-  }
-  return elements;
+  return readArchitectureFiles(join(ROOT, 'architecture')).flatMap((f) => parsePuml(f.text).elements);
 }
 
 function loadTrace() {

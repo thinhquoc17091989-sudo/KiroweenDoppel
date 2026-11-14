@@ -67,7 +67,7 @@ if (!hasKiro) console.log('  note: no .kiro/ folder here yet — Kiro will not h
 const server = await createServer({
   configFile: false,          // do not pick up the host project's vite config
   root: PACKAGE_DIR,          // index.html and src/ live in the package
-  plugins: [doppelDevApi(projectRoot)], // but the data comes from the host project
+  plugins: [doppelDevApi(projectRoot, { autoOpen: open })], // but the data comes from the host project
   server: { port, open: false },
   logLevel: 'warn',
 });

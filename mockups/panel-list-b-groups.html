@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — List B: collapsible groups</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --iface:#2a6fb8;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  main { display: flex; height: calc(100vh - 52px); }
+  .canvas { flex: 1; background: #12151c; padding: 28px 32px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .canvas h3 { color: #cfd5e3; font-size: 13px; margin: 0 0 10px; }
+  .canvas ul { margin: 0; padding-left: 18px; }
+  .canvas b { color: #ffb77a; font-weight: 600; }
+
+  aside { width: 340px; flex: 0 0 340px; background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .panelTabs { display: flex; gap: 4px; padding: 10px 14px 0; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+  .ptab { border: 0; background: transparent; color: var(--muted); font: 600 12px var(--sans); padding: 8px 4px 10px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .ptab.on { color: #fff; border-bottom-color: var(--accent); }
+
+  .panelBody { flex: 1; min-height: 0; overflow: auto; padding: 8px 0 12px; }
+
+  /* a group header is a button: collapse a settled section and the pending work moves up */
+  .ghead { position: sticky; top: 0; z-index: 1; width: 100%; background: var(--panel); border: 0; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 9px 14px; cursor: pointer; text-align: left; }
+  .ghead:hover { background: var(--panel2); }
+  .chev { font-size: 9px; color: var(--muted); width: 9px; transition: transform .12s; }
+  .ghead.closed .chev { transform: rotate(-90deg); }
+  .ghead .gname { font: 700 11px var(--sans); letter-spacing: .1em; text-transform: uppercase; flex: 1; }
+  .ghead.proposed .gname { color: #c6a8f5; }
+  .ghead.modified .gname { color: #f0c382; }
+  .ghead.approved .gname { color: #9fe0b8; }
+  .ghead .gcount { font: 600 10.5px var(--mono); padding: 1px 7px; border-radius: 10px; background: var(--panel2); color: #cfd5e3; }
+
+  /* coverage meter: at a glance, how much of this group a reviewer has actually described */
+  .meter { height: 3px; background: #2a2f3d; border-radius: 2px; overflow: hidden; margin: 0 14px 4px; }
+  .meter i { display: block; height: 100%; background: #5d6680; }
+
+  .glist.closed { display: none; }
+  .row { display: flex; align-items: baseline; gap: 9px; padding: 7px 14px 7px 31px; cursor: pointer; border-left: 2px solid transparent; }
+  .row:hover { background: var(--panel2); border-left-color: #4a5570; }
+  .row.hl { background: rgba(255,122,26,.10); border-left-color: var(--accent); }
+  .row .name { font-weight: 600; font-size: 12.5px; }
+  .row .kind { font-size: 10px; font-family: var(--mono); color: #6b7488; margin-left: auto; }
+  .row .kind.iface { color: var(--iface); }
+  /* the description only takes space on an element that actually has one */
+  .rowDesc { padding: 0 14px 7px 31px; font-size: 11px; color: #8d96ab; line-height: 1.35; margin-top: -4px; cursor: pointer; }
+  .rowDesc span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .panelFoot { flex: 0 0 auto; border-top: 1px solid var(--line); padding: 10px 14px 14px; }
+  .counts { font-size: 11px; color: var(--muted); margin-bottom: 9px; }
+  .counts b { color: #cfd5e3; }
+  button.primary { width: 100%; font: 700 12.5px var(--sans); padding: 10px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup B — <b>fold away what's settled</b>: collapsible groups with a description-coverage meter.</div>
+  </header>
+  <main>
+    <div class="canvas">
+      <h3>What this one optimises for</h3>
+      <ul>
+        <li>Approved elements are usually not what you came to review, so that whole group <b>collapses to one line</b>.</li>
+        <li>The thin bar under each header shows <b>how many in that group have a description</b> — a gap you can see without opening anything.</li>
+        <li>Descriptions still show inline, but only for elements that have one, so a bare model stays compact.</li>
+        <li>Best when the model has a clear split between settled and pending work.</li>
+      </ul>
+    </div>
+
+    <aside>
+      <div class="panelTabs">
+        <button class="ptab on">Inspector</button>
+        <button class="ptab">PlantUML</button>
+      </div>
+
+      <div class="panelBody">
+        <button class="ghead proposed"><span class="chev">&#9660;</span><span class="gname">Proposed</span><span class="gcount">14</span></button>
+        <div class="meter" title="4 of 14 described"><i style="width:29%"></i></div>
+        <div class="glist">
+          <div class="row"><span class="name">MoistureSensor</span><span class="kind">component</span></div>
+          <div class="rowDesc"><span>Reads soil moisture on a fixed interval per zone.</span></div>
+          <div class="row"><span class="name">PumpDriver</span><span class="kind">component</span></div>
+          <div class="rowDesc"><span>Drives the physical pump relay for one zone.</span></div>
+          <div class="row"><span class="name">Scheduler</span><span class="kind">component</span></div>
+          <div class="row"><span class="name">MoistureReading</span><span class="kind iface">interface</span></div>
+          <div class="row"><span class="name">RainForecast</span><span class="kind">component</span></div>
+          <div class="row"><span class="name">ZoneManager</span><span class="kind">component</span></div>
+          <div class="rowDesc"><span>Owns the list of watering zones and their current state.</span></div>
+          <div class="row"><span class="name">ValveDriver</span><span class="kind">component</span></div>
+          <div class="row"><span class="name">FlowMeter</span><span class="kind">component</span></div>
+          <div class="row"><span class="name">TankLevelSensor</span><span class="kind">component</span></div>
+          <div class="rowDesc"><span>Stops a cycle when the reservoir drops below reserve.</span></div>
+          <div class="row"><span class="name">WeatherClient</span><span class="kind">component</span></div>
+          <div class="row"><span class="name">AlertService</span><span class="kind">component</span></div>
+          <div class="row"><span class="name">SensorBus</span><span class="kind iface">interface</span></div>
+          <div class="row"><span class="name">CalibrationJob</span><span class="kind">component</span></div>
+          <div class="row"><span class="name">TelemetryUploader</span><span class="kind">component</span></div>
+        </div>
+
+        <button class="ghead modified"><span class="chev">&#9660;</span><span class="gname">Modified</span><span class="gcount">3</span></button>
+        <div class="meter" title="2 of 3 described"><i style="width:66%"></i></div>
+        <div class="glist">
+          <div class="row hl"><span class="name">WateringController</span><span class="kind">component</span></div>
+          <div class="rowDesc"><span>Coordinates sensor readings with pump timing.</span></div>
+          <div class="row"><span class="name">IrrigationPlan</span><span class="kind">component</span></div>
+          <div class="rowDesc"><span>The schedule a zone follows for the coming week.</span></div>
+          <div class="row"><span class="name">PumpSafetyMonitor</span><span class="kind">component</span></div>
+        </div>
+
+        <button class="ghead approved closed"><span class="chev">&#9660;</span><span class="gname">Approved</span><span class="gcount">5</span></button>
+        <div class="glist closed"></div>
+      </div>
+
+      <div class="panelFoot">
+        <div class="counts"><b>22</b> elements &middot; <b>17</b> pending &middot; <b>8</b> described</div>
+        <button class="primary">Approve architecture</button>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

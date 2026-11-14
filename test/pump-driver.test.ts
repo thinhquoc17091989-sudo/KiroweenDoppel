@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PumpDriver } from '../src/pump-driver';
 
-describe('PumpDriver', () => {
+describe('pump-driver (PumpActuator)', () => {
   it('starts and stops, reporting no-ops', () => {
     const pump = new PumpDriver();
     expect(pump.start()).toBe(true);

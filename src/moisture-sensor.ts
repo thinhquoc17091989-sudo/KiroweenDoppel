@@ -1,5 +1,5 @@
 // element: moisture-sensor (req: R1)
-import type { MoistureReading } from './moisture-reading';
+import type { MoistureReading } from './moisture-reading.ts';
 
 /** Converts raw analog readings into moisture readings. */
 export class MoistureSensor {

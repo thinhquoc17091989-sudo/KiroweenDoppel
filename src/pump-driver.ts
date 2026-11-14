@@ -1,6 +1,6 @@
 // element: pump-driver (req: R2)
 
-/** Switches the water pump and refuses to run it longer than a safety limit. */
+/** Diagram name "PumpActuator" (alias PumpDriver). Switches the water pump and refuses to run it longer than a safety limit. */
 export class PumpDriver {
   private running = false;
   private startedAt = 0;

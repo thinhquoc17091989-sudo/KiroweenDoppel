@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — List A: search and filter</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --iface:#2a6fb8;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  main { display: flex; height: calc(100vh - 52px); }
+  .canvas { flex: 1; background: #12151c; padding: 28px 32px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .canvas h3 { color: #cfd5e3; font-size: 13px; margin: 0 0 10px; }
+  .canvas ul { margin: 0; padding-left: 18px; }
+  .canvas b { color: #ffb77a; font-weight: 600; }
+
+  aside { width: 340px; flex: 0 0 340px; background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .panelTabs { display: flex; gap: 4px; padding: 10px 14px 0; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+  .ptab { border: 0; background: transparent; color: var(--muted); font: 600 12px var(--sans); padding: 8px 4px 10px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .ptab.on { color: #fff; border-bottom-color: var(--accent); }
+
+  /* filter bar sits outside the scroll, so it never scrolls away on a long model */
+  .filterBar { flex: 0 0 auto; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .searchWrap { position: relative; }
+  .searchWrap input { width: 100%; background: #12151c; border: 1px solid var(--line); border-radius: 7px; color: #e6e9f0; font: 12.5px var(--sans); padding: 7px 10px 7px 28px; }
+  .searchWrap input::placeholder { color: #5a6378; }
+  .searchWrap .mag { position: absolute; left: 9px; top: 7px; color: #5a6378; font-size: 12px; }
+  .pills { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .pill { font: 600 11px var(--sans); padding: 4px 9px; border-radius: 20px; border: 1px solid var(--line); color: var(--muted); cursor: pointer; background: transparent; }
+  .pill:hover { color: #cfd5e3; border-color: #4a5570; }
+  .pill.on { background: rgba(255,122,26,.14); border-color: var(--accent); color: #ffb77a; }
+  .pill i { font-style: normal; font-family: var(--mono); opacity: .8; }
+
+  .panelBody { flex: 1; min-height: 0; overflow: auto; padding: 6px 0 12px; }
+  .groupLabel { position: sticky; top: 0; background: var(--panel); z-index: 1; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 9px 14px 6px; display: flex; gap: 7px; align-items: baseline; }
+  .groupLabel em { font-style: normal; font-family: var(--mono); color: #cfd5e3; }
+
+  /* one line per element: ~32px instead of ~92px, so a 22-element model is one scroll, not six */
+  .row { display: flex; align-items: center; gap: 9px; padding: 7px 14px; cursor: pointer; border-left: 2px solid transparent; }
+  .row:hover { background: var(--panel2); border-left-color: #4a5570; }
+  .row.hl { background: rgba(255,122,26,.10); border-left-color: var(--accent); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 7px; }
+  .dot.proposed { background: var(--proposed); }
+  .dot.modified { background: var(--modified); }
+  .dot.approved { background: var(--approved); }
+  .row .name { font-weight: 600; font-size: 12.5px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .kind { font-size: 10px; font-family: var(--mono); color: #6b7488; }
+  .row .kind.iface { color: var(--iface); }
+  .row .hasDesc { width: 5px; height: 5px; border-radius: 50%; background: #5d6680; flex: 0 0 5px; }
+  .row .hasDesc.off { background: transparent; }
+
+  .panelFoot { flex: 0 0 auto; border-top: 1px solid var(--line); padding: 10px 14px 14px; }
+  .counts { font-size: 11px; color: var(--muted); margin-bottom: 9px; display: flex; justify-content: space-between; }
+  .counts b { color: #cfd5e3; }
+  button.primary { width: 100%; font: 700 12.5px var(--sans); padding: 10px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup A — <b>find it fast</b>: one line per element, with search and status filters pinned above the scroll.</div>
+  </header>
+  <main>
+    <div class="canvas">
+      <h3>What this one optimises for</h3>
+      <ul>
+        <li>A row is <b>32px</b>, not 92px — 22 elements fit without scrolling.</li>
+        <li>Search and the status filters never scroll away.</li>
+        <li>The <b>"+ description"</b> prompt is gone from every row; a small grey dot marks the ones that have one, and writing it happens in the detail view.</li>
+        <li>Best when you know roughly what you are looking for and the model is flat.</li>
+      </ul>
+    </div>
+
+    <aside>
+      <div class="panelTabs">
+        <button class="ptab on">Inspector</button>
+        <button class="ptab">PlantUML</button>
+      </div>
+
+      <div class="filterBar">
+        <div class="searchWrap">
+          <span class="mag">&#9906;</span>
+          <input type="text" placeholder="Filter elements…">
+        </div>
+        <div class="pills">
+          <button class="pill on">All <i>22</i></button>
+          <button class="pill">Proposed <i>14</i></button>
+          <button class="pill">Modified <i>3</i></button>
+          <button class="pill">Approved <i>5</i></button>
+        </div>
+      </div>
+
+      <div class="panelBody">
+        <div class="groupLabel">Proposed <em>14</em></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">MoistureSensor</span><span class="kind">component</span><span class="hasDesc"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">PumpDriver</span><span class="kind">component</span><span class="hasDesc"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">Scheduler</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">MoistureReading</span><span class="kind iface">interface</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">RainForecast</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">ZoneManager</span><span class="kind">component</span><span class="hasDesc"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">ValveDriver</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">FlowMeter</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">TankLevelSensor</span><span class="kind">component</span><span class="hasDesc"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">WeatherClient</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">AlertService</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">SensorBus</span><span class="kind iface">interface</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">CalibrationJob</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">TelemetryUploader</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+
+        <div class="groupLabel">Modified <em>3</em></div>
+        <div class="row hl"><span class="dot modified"></span><span class="name">WateringController</span><span class="kind">component</span><span class="hasDesc"></span></div>
+        <div class="row"><span class="dot modified"></span><span class="name">IrrigationPlan</span><span class="kind">component</span><span class="hasDesc"></span></div>
+        <div class="row"><span class="dot modified"></span><span class="name">PumpSafetyMonitor</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+
+        <div class="groupLabel">Approved <em>5</em></div>
+        <div class="row"><span class="dot approved"></span><span class="name">ConfigStore</span><span class="kind">component</span><span class="hasDesc"></span></div>
+        <div class="row"><span class="dot approved"></span><span class="name">EventLog</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot approved"></span><span class="name">SoilProfile</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot approved"></span><span class="name">UserSettings</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+        <div class="row"><span class="dot approved"></span><span class="name">FirmwareUpdater</span><span class="kind">component</span><span class="hasDesc off"></span></div>
+      </div>
+
+      <div class="panelFoot">
+        <div class="counts"><span><b>22</b> elements &middot; <b>17</b> pending</span><span><b>8</b> described</span></div>
+        <button class="primary">Approve architecture</button>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

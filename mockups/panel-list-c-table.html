@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — List C: table</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6; --iface:#2a6fb8;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  main { display: flex; height: calc(100vh - 52px); }
+  .canvas { flex: 1; background: #12151c; padding: 28px 32px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .canvas h3 { color: #cfd5e3; font-size: 13px; margin: 0 0 10px; }
+  .canvas ul { margin: 0; padding-left: 18px; }
+  .canvas b { color: #ffb77a; font-weight: 600; }
+
+  aside { width: 340px; flex: 0 0 340px; background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .panelTabs { display: flex; gap: 4px; padding: 10px 14px 0; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+  .ptab { border: 0; background: transparent; color: var(--muted); font: 600 12px var(--sans); padding: 8px 4px 10px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .ptab.on { color: #fff; border-bottom-color: var(--accent); }
+
+  .panelBody { flex: 1; min-height: 0; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { position: sticky; top: 0; background: var(--panel); z-index: 1; text-align: left; font: 600 10px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 8px; border-bottom: 1px solid var(--line); cursor: pointer; white-space: nowrap; }
+  thead th:first-child { padding-left: 14px; }
+  thead th:last-child { padding-right: 14px; text-align: center; }
+  thead th:hover { color: #cfd5e3; }
+  thead th.sorted { color: #ffb77a; }
+  thead th .caret { font-size: 8px; margin-left: 3px; }
+
+  tbody tr { cursor: pointer; border-bottom: 1px solid #22262f; }
+  tbody tr:hover { background: var(--panel2); }
+  tbody tr.hl { background: rgba(255,122,26,.10); box-shadow: inset 2px 0 0 var(--accent); }
+  tbody td { padding: 6px 8px; font-size: 12px; vertical-align: middle; }
+  tbody td:first-child { padding-left: 14px; }
+  tbody td:last-child { padding-right: 14px; text-align: center; }
+
+  .st { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+  .st.proposed { background: var(--proposed); }
+  .st.modified { background: var(--modified); }
+  .st.approved { background: var(--approved); }
+  .nm { font-weight: 600; }
+  .kd { font-family: var(--mono); font-size: 10px; color: #6b7488; }
+  .kd.iface { color: var(--iface); }
+  .rq { font-family: var(--mono); font-size: 10px; color: #8d96ab; white-space: nowrap; }
+  .rq.none { color: #4a5164; }
+  /* a filled dot means "has a description", hollow means "nobody wrote one yet" --
+     one glance down the column shows every gap a reviewer still has to fill */
+  .dsc { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #5d6680; }
+  .dsc.off { background: transparent; border: 1px solid #434b5e; }
+
+  .panelFoot { flex: 0 0 auto; border-top: 1px solid var(--line); padding: 10px 14px 14px; }
+  .counts { font-size: 11px; color: var(--muted); margin-bottom: 9px; display: flex; justify-content: space-between; }
+  .counts b { color: #cfd5e3; }
+  button.primary { width: 100%; font: 700 12.5px var(--sans); padding: 10px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup C — <b>a table you can sort</b>: densest option, and the only one that shows requirement coverage down a column.</div>
+  </header>
+  <main>
+    <div class="canvas">
+      <h3>What this one optimises for</h3>
+      <ul>
+        <li>Densest of the three at <b>~27px</b> a row, and it keeps getting usable past 50 elements.</li>
+        <li>Sort by name, kind, requirement or description to <b>find the gaps</b>: every element with no requirement tag, or no description, lines up together.</li>
+        <li>Requirements become scannable instead of being buried in a meta line.</li>
+        <li>Best when you are auditing a large model rather than reading it.</li>
+      </ul>
+    </div>
+
+    <aside>
+      <div class="panelTabs">
+        <button class="ptab on">Inspector</button>
+        <button class="ptab">PlantUML</button>
+      </div>
+
+      <div class="panelBody">
+        <table>
+          <thead>
+            <tr>
+              <th class="sorted">Element<span class="caret">&#9650;</span></th>
+              <th>Kind</th>
+              <th>Req</th>
+              <th title="Has a description">Desc</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="st proposed"></span><span class="nm">AlertService</span></td><td class="kd">comp</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">CalibrationJob</span></td><td class="kd">comp</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st approved"></span><span class="nm">ConfigStore</span></td><td class="kd">comp</td><td class="rq">R9</td><td><span class="dsc"></span></td></tr>
+            <tr><td><span class="st approved"></span><span class="nm">EventLog</span></td><td class="kd">comp</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st approved"></span><span class="nm">FirmwareUpdater</span></td><td class="kd">comp</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">FlowMeter</span></td><td class="kd">comp</td><td class="rq">R6</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st modified"></span><span class="nm">IrrigationPlan</span></td><td class="kd">comp</td><td class="rq">R4 R5</td><td><span class="dsc"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">MoistureReading</span></td><td class="kd iface">iface</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">MoistureSensor</span></td><td class="kd">comp</td><td class="rq">R1</td><td><span class="dsc"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">PumpDriver</span></td><td class="kd">comp</td><td class="rq">R2</td><td><span class="dsc"></span></td></tr>
+            <tr><td><span class="st modified"></span><span class="nm">PumpSafetyMonitor</span></td><td class="kd">comp</td><td class="rq">R7</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">RainForecast</span></td><td class="kd">comp</td><td class="rq">R8</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">Scheduler</span></td><td class="kd">comp</td><td class="rq">R3</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">SensorBus</span></td><td class="kd iface">iface</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st approved"></span><span class="nm">SoilProfile</span></td><td class="kd">comp</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">TankLevelSensor</span></td><td class="kd">comp</td><td class="rq">R6</td><td><span class="dsc"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">TelemetryUploader</span></td><td class="kd">comp</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st approved"></span><span class="nm">UserSettings</span></td><td class="kd">comp</td><td class="rq none">—</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">ValveDriver</span></td><td class="kd">comp</td><td class="rq">R2</td><td><span class="dsc off"></span></td></tr>
+            <tr class="hl"><td><span class="st modified"></span><span class="nm">WateringController</span></td><td class="kd">comp</td><td class="rq">R1 R2</td><td><span class="dsc"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">WeatherClient</span></td><td class="kd">comp</td><td class="rq">R8</td><td><span class="dsc off"></span></td></tr>
+            <tr><td><span class="st proposed"></span><span class="nm">ZoneManager</span></td><td class="kd">comp</td><td class="rq">R4</td><td><span class="dsc"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panelFoot">
+        <div class="counts"><span><b>22</b> elements &middot; <b>17</b> pending</span><span><b>8</b> described</span></div>
+        <button class="primary">Approve architecture</button>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

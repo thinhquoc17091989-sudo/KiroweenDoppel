@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doppel mockup — Panel C: Tabbed workspace</title>
+<style>
+  :root { --chrome:#15181f; --panel:#1d212b; --panel2:#242938; --line:#2d3342;
+    --muted:#9aa3b8; --accent:#ff7a1a; --accent-ink:#1a1a1a;
+    --approved:#1f6f4a; --modified:#b7791f; --proposed:#7a4bd6;
+    --mono: ui-monospace, Consolas, "Liberation Mono", monospace; --sans: -apple-system, "Segoe UI", Inter, Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--sans); background: var(--chrome); color: #e6e9f0; }
+  header { display: flex; align-items: center; gap: 14px; padding: 0 20px; height: 52px; border-bottom: 1px solid var(--line); }
+  .brand { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .note { font-size: 12px; color: var(--muted); }
+  main { display: flex; height: calc(100vh - 52px); }
+  .canvas { flex: 1; background: #12151c; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
+
+  aside { width: 340px; flex: 0 0 340px; background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .tab { flex: 1; text-align: center; padding: 11px 0; font: 600 12px var(--sans); color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.on { color: #fff; border-bottom-color: var(--accent); }
+  .tabBody { flex: 1; overflow: auto; padding: 14px; }
+  .tabBody.hidden { display: none; }
+
+  /* List tab */
+  .row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); margin-bottom: 6px; cursor: pointer; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+  .dot.proposed { background: var(--proposed); }
+  .dot.modified { background: var(--modified); }
+  .dot.approved { background: var(--approved); }
+  .row .name { font-weight: 600; font-size: 13px; flex: 1; }
+  .row .kind { font-size: 10.5px; color: var(--muted); font-family: var(--mono); }
+  .sectionLabel { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+
+  /* Details tab */
+  .iName { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+  .iMeta { font-size: 11.5px; color: var(--muted); font-family: var(--mono); margin-bottom: 12px; }
+  label.field { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin: 12px 0 6px; }
+  textarea.descBox { width: 100%; min-height: 70px; background: #12151c; border: 1px solid var(--line); border-radius: 7px; color: #e6e9f0; font: 12.5px/1.5 var(--sans); padding: 8px 10px; resize: vertical; }
+  .linkRow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .linkRow:first-of-type { border-top: 0; }
+  .emptyNote { font-size: 12px; color: var(--muted); text-align: center; padding: 30px 10px; }
+
+  /* PlantUML tab */
+  pre.puml { font: 11.5px/1.5 var(--mono); background: #12151c; border: 1px solid var(--line); border-radius: 8px; padding: 12px; white-space: pre; color: #c8d0e0; margin: 0; }
+
+  .footerApprove { padding: 14px; border-top: 1px solid var(--line); }
+  button.primary { width: 100%; font: 700 12.5px var(--sans); padding: 11px; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 7px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Doppel</div>
+    <div class="note">Mockup C — the panel becomes a small <b>tabbed workspace</b>: List, Details, and the raw PlantUML each get full room instead of fighting for scroll space.</div>
+  </header>
+  <main>
+    <div class="canvas">canvas — unchanged from today</div>
+    <aside>
+      <div class="tabs">
+        <div class="tab on">List</div>
+        <div class="tab">Details</div>
+        <div class="tab">PlantUML</div>
+      </div>
+
+      <div class="tabBody" id="tabList">
+        <div class="sectionLabel">Proposals <span style="color:#ff7a1a">3</span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">Scheduler</span><span class="kind">component</span></div>
+        <div class="row"><span class="dot modified"></span><span class="name">WateringController</span><span class="kind">component</span></div>
+        <div class="row"><span class="dot proposed"></span><span class="name">PumpDriver</span><span class="kind">component</span></div>
+        <div class="sectionLabel" style="margin-top:16px">Approved <span style="color:#9fe0b8">1</span></div>
+        <div class="row"><span class="dot approved"></span><span class="name">MoistureSensor</span><span class="kind">component</span></div>
+      </div>
+
+      <div class="tabBody hidden" id="tabDetails">
+        <div class="iName">WateringController</div>
+        <div class="iMeta">id: watering-controller &middot; modified</div>
+        <label class="field">Description</label>
+        <textarea class="descBox">Coordinates sensor readings with pump timing.</textarea>
+        <label class="field">Connections</label>
+        <div class="linkRow"><span>&larr; Scheduler</span><span style="color:var(--muted);margin-left:auto;font-size:11px">triggers</span></div>
+        <div class="linkRow"><span>&rarr; PumpDriver</span><span style="color:var(--muted);margin-left:auto;font-size:11px">drives</span></div>
+      </div>
+
+      <div class="tabBody hidden" id="tabPuml">
+        <pre class="puml">@startuml
+component Scheduler
+component WateringController
+component PumpDriver
+
+Scheduler --&gt; WateringController : triggers
+WateringController --&gt; PumpDriver : drives
+@enduml</pre>
+      </div>
+
+      <div class="footerApprove">
+        <button class="primary">Approve architecture</button>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Open Doppel when a proposal is written",
+  "description": "The moment a proposal file changes, make sure Doppel is running so the reviewer sees it without having to start anything by hand. A no-op if it is already running.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["proposals.puml", "doppel/proposals.puml", "samples/*/proposals.puml"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "node bin/open-review.mjs"
+  }
+}

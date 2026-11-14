@@ -20,7 +20,7 @@
  * While/repeat loops, fork/join and partitions are out of this slice (no cycles means the
  * layout stays a plain DAG); a line using them is dropped, same policy as elsewhere.
  */
-import { aliasOf, idOf, printMeta, quote, readMeta, stripEnvelope, type Pending, type Status } from './dsl';
+import { aliasOf, idOf, printMeta, quote, readMeta, stripEnvelope, type Pending, type Status } from './dsl.ts';
 
 export type ActivityKind = 'action' | 'decision';
 

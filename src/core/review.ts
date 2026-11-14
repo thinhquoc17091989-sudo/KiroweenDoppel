@@ -1,6 +1,6 @@
 /** Review actions on a Model. Pure: each returns a new Model. */
-import type { Model } from './model';
-import { aliasOf } from './puml';
+import type { Model } from './model.ts';
+import { aliasOf } from './puml.ts';
 
 /** A link is a proposal while either end is still proposed. */
 export function refreshLinkStatus(m: Model): Model {
@@ -12,6 +12,19 @@ export function accept(m: Model, id: string): Model {
   return refreshLinkStatus({
     ...m,
     elements: m.elements.map((e) => (e.id === id ? { ...e, status: 'approved' } : e)),
+  });
+}
+
+/**
+ * Accepts every element still pending a decision, in one step. This is what "Approve
+ * architecture" calls before writing — a reviewer rejects or renames whatever they don't
+ * want first, then approves the rest in one action, rather than clicking Accept on every
+ * remaining element individually.
+ */
+export function acceptAll(m: Model): Model {
+  return refreshLinkStatus({
+    ...m,
+    elements: m.elements.map((e) => (e.status === 'approved' ? e : { ...e, status: 'approved' })),
   });
 }
 
@@ -41,6 +54,11 @@ export function rename(m: Model, id: string, name: string): Model {
   let n = 2;
   while (taken.has(alias)) alias = aliasOf(clean) + n++;
   return { ...m, elements: m.elements.map((e) => (e.id === id ? { ...e, name: clean, alias } : e)) };
+}
+
+/** Sets an element's free-text description. Never touches status, links or the id. */
+export function setDescription(m: Model, id: string, desc: string): Model {
+  return { ...m, elements: m.elements.map((e) => (e.id === id ? { ...e, desc: desc.trim() } : e)) };
 }
 
 /** Approved and modified elements ship; only 'proposed' (never yet approved) is held back. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -88,10 +88,36 @@ describe('IDE hook files (*.kiro.hook)', () => {
         for (const p of hook.when.patterns) expect(p).not.toContain('.*');
       });
 
-      it('asks the agent to do something', () => {
-        expect(hook.then.type).toBe('askAgent');
-        expect(typeof hook.then.prompt).toBe('string');
-        expect(hook.then.prompt.length).toBeGreaterThan(40);
+      it('reaches diagrams inside feature folders, not just the top level', () => {
+        // Only applies to a hook watching architecture/, which is a hierarchy with a folder
+        // per feature. A lone "architecture/*.puml" does not cross a slash, so approving
+        // into a feature folder would write the file and then silently generate nothing —
+        // the core loop broken exactly where it is least visible. Hooks watching the
+        // proposals file have no such hierarchy and are left alone.
+        const patterns: string[] = hook.when.patterns;
+        if (!patterns.some((p) => p.startsWith('architecture/'))) return;
+        expect(patterns.some((p) => p.includes('**')), `no recursive pattern in ${JSON.stringify(patterns)}`).toBe(true);
+      });
+
+      it('either asks the agent or runs a command, with the matching field filled in', () => {
+        expect(['askAgent', 'runCommand']).toContain(hook.then.type);
+        if (hook.then.type === 'askAgent') {
+          expect(typeof hook.then.prompt).toBe('string');
+          // A one-liner prompt usually means the instruction got truncated during editing.
+          expect(hook.then.prompt.length).toBeGreaterThan(40);
+        } else {
+          expect(typeof hook.then.command).toBe('string');
+          expect(hook.then.command.length).toBeGreaterThan(0);
+        }
+      });
+
+      it('if it runs a command, that command points at a script that exists', () => {
+        if (hook.then.type !== 'runCommand') return;
+        // "node bin/open-review.mjs" -> bin/open-review.mjs must actually be there, or the
+        // hook fires into nothing and fails silently, which is the whole failure mode here.
+        const scriptArg = hook.then.command.split(/\s+/).find((p: string) => p.endsWith('.mjs') || p.endsWith('.js'));
+        expect(scriptArg, `no script found in command: ${hook.then.command}`).toBeDefined();
+        expect(existsSync(join(process.cwd(), scriptArg!)), `${scriptArg} does not exist`).toBe(true);
       });
     });
   }

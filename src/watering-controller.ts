@@ -1,6 +1,6 @@
 // element: watering-controller (req: R1, R2)
-import type { MoistureReading } from './moisture-reading';
-import type { PumpDriver } from './pump-driver';
+import type { MoistureReading } from './moisture-reading.ts';
+import type { PumpDriver } from './pump-driver.ts';
 
 /** Decides when to water from the latest moisture reading and the schedule. */
 export class WateringController {

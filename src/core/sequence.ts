@@ -15,7 +15,7 @@
  * No fragments (alt/opt/loop) and no activation bars in this slice — plain ordered
  * messages only; a line outside this grammar is dropped, same policy as elsewhere.
  */
-import { aliasOf, idOf, printMeta, quote, readMeta, stripEnvelope, type Pending, type Status } from './dsl';
+import { aliasOf, idOf, printMeta, quote, readMeta, stripEnvelope, type Pending, type Status } from './dsl.ts';
 
 export interface SeqParticipant {
   id: string;

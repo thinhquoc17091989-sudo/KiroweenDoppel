@@ -16,12 +16,14 @@
  *                            design.md's "Dev console" section for what went wrong and why
  *                            content comparison replaced it).
  */
-import { execFile } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { execFile, spawn } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, watch, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { recordGeneration } from '../mcp/update-trace.mjs';
+import { readArchitectureFiles } from '../mcp/arch-files.mjs';
+import { normaliseTarget } from '../src/core/paths.ts';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, isApprovedArchitectureFile, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
 
 const MODELS = ['claude-haiku-5.5', 'claude-sonnet-5.5', 'claude-opus-5.5', 'auto'];
 const KIRO_EXE = join(process.env.LOCALAPPDATA ?? '', 'kiro-cli', 'kiro-cli.exe');
@@ -45,16 +47,13 @@ const PROPOSALS_CANDIDATES = [
 /** Never counted as approved architecture, wherever someone puts it. */
 const PROPOSALS_BASENAME = 'proposals.puml';
 
-export function doppelDevApi(root) {
+export function doppelDevApi(root, { autoOpen = true } = {}) {
   const archDir = join(root, 'architecture');
   const tracePath = join(root, 'trace.json');
 
   function loadArchitecture() {
-    if (!existsSync(archDir)) return { files: [], elements: [] };
-    const names = readdirSync(archDir).filter(isApprovedArchitectureFile);
-    const files = names.map((name) => ({ name, text: readFileSync(join(archDir, name), 'utf8') }));
-    const elements = files.flatMap((f) => parsePuml(f.text).elements);
-    return { files, elements };
+    const files = readArchitectureFiles(archDir);
+    return { files, elements: files.flatMap((f) => parsePuml(f.text).elements) };
   }
 
   function loadProposals() {
@@ -138,10 +137,100 @@ export function doppelDevApi(root) {
   return {
     name: 'doppel-dev-api',
     configureServer(server) {
+      /**
+       * Watch the proposals file so a reviewer never has to ask "has Kiro finished yet".
+       * Kiro writes a proposal, this notices, and the open page shows it immediately. If no
+       * page is open, a window is opened — that is the "it pops up" behaviour, done from
+       * the server because a browser tab cannot open itself.
+       *
+       * Deliberately watched by its CONTENT, not just the fs event: editors and agents
+       * commonly write a file two or three times in a row (truncate, write, rename), which
+       * fires several events for one logical change and would otherwise open three windows.
+       */
+      const clients = new Set();
+      let lastSeen = loadProposals()?.text ?? null;
+      let settle = null;
+
+      const notify = () => {
+        const current = loadProposals();
+        if (!current || current.text === lastSeen) return; // nothing actually changed
+        lastSeen = current.text;
+
+        const payload = `data: ${JSON.stringify({ type: 'proposals-changed', file: current.name })}\n\n`;
+        for (const res of clients) { try { res.write(payload); } catch { clients.delete(res); } }
+
+        if (clients.size === 0 && !autoOpen) {
+          // Started with --no-open: respect that later too, rather than springing a window
+          // on someone who explicitly asked for none.
+          console.log(`  Doppel: Kiro proposed a change in ${current.name} (no page open; not opening one)`);
+        } else if (clients.size === 0) {
+          // Nobody is watching: open the review page so the proposal is seen at all.
+          const url = `http://localhost:${server.config.server.port ?? 5173}/`;
+          const cmd = process.platform === 'win32' ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+          const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url];
+          try { spawn(cmd, args, { stdio: 'ignore', detached: true }).unref(); } catch { /* headless: fine */ }
+          console.log(`\n  Doppel: Kiro proposed a change in ${current.name} — opening ${url}\n`);
+        } else {
+          console.log(`  Doppel: Kiro proposed a change in ${current.name} — pushed to ${clients.size} open page(s)`);
+        }
+      };
+
+      // Watch the whole project root shallowly; fs.watch on a single file misses rewrites
+      // that replace the inode, which is exactly how many editors and agents save.
+      let watcher = null;
+      try {
+        watcher = watch(root, { recursive: false }, (_event, filename) => {
+          if (!filename || !String(filename).endsWith('.puml')) return;
+          clearTimeout(settle);
+          settle = setTimeout(notify, 250); // coalesce a burst of writes into one notification
+        });
+        watcher.unref?.(); // never hold the process open on our account
+      } catch (err) {
+        console.warn('  Doppel: could not watch for proposals —', err.message);
+      }
+
+      // Release the watcher, the debounce timer and any held-open SSE responses when the
+      // server stops. Without this the handles keep the process alive -- which showed up as
+      // vitest reporting "something prevents 2 Vite servers from exiting".
+      const cleanup = () => {
+        clearTimeout(settle);
+        try { watcher?.close(); } catch { /* already closed */ }
+        for (const res of clients) { try { res.end(); } catch { /* already gone */ } }
+        clients.clear();
+      };
+      server.httpServer?.once('close', cleanup);
+      process.once('exit', cleanup);
+
+      server.middlewares.use('/api/events', (req, res) => {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        });
+        res.write('retry: 2000\n\n');
+        clients.add(res);
+        req.on('close', () => clients.delete(res));
+      });
+
       server.middlewares.use(async (req, res, next) => {
         try {
           if (req.url === '/api/state' && req.method === 'GET') {
             sendJson(res, 200, { ok: true, models: MODELS, ...currentState() });
+            return;
+          }
+          if (req.url === '/api/approve' && req.method === 'POST') {
+            const body = JSON.parse((await readBody(req)) || '{}');
+            // Validated with the same rule the browser uses, not trusted from it: this
+            // writes to disk, so a target that climbs out of architecture/ is refused here
+            // whatever the page asked for.
+            const target = normaliseTarget(String(body.target ?? ''));
+            const text = String(body.text ?? '');
+            if (!target) { sendJson(res, 400, { ok: false, error: 'target must be a .puml path inside architecture/' }); return; }
+            if (!text.trim()) { sendJson(res, 400, { ok: false, error: 'nothing to write' }); return; }
+            const abs = join(archDir, ...target.split('/'));
+            mkdirSync(dirname(abs), { recursive: true });
+            writeFileSync(abs, text, 'utf8');
+            sendJson(res, 200, { ok: true, path: `architecture/${target}` });
             return;
           }
           if (req.url === '/api/run' && req.method === 'POST') {

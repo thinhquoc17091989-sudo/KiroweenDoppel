@@ -21,10 +21,11 @@
  * Drift found is information for the agent, not a script failure. A missing or corrupt
  * trace.json is treated as "no trace yet", not an error.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, isApprovedArchitectureFile, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { readArchitectureFiles } from './arch-files.mjs';
 
 const root = process.cwd();
 const archDir = join(root, 'architecture');
@@ -32,14 +33,7 @@ const tracePath = join(root, 'trace.json');
 const brief = process.argv.includes('--brief');
 
 function loadArchitectureElements() {
-  if (!existsSync(archDir)) return [];
-  const files = readdirSync(archDir).filter(isApprovedArchitectureFile);
-  const elements = [];
-  for (const f of files) {
-    const text = readFileSync(join(archDir, f), 'utf8');
-    elements.push(...parsePuml(text).elements);
-  }
-  return elements;
+  return readArchitectureFiles(archDir).flatMap((f) => parsePuml(f.text).elements);
 }
 
 function loadTrace() {

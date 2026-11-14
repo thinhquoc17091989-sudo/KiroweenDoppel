@@ -19,6 +19,9 @@ export interface Element {
   alias: string;
   /** Requirement ids this element satisfies, e.g. ["R1", "R2"]. */
   req: string[];
+  /** Free-text description, from a `' desc:` comment. Empty string when there is none —
+   *  never undefined, so a diagram's note count stays a plain .filter(e => e.desc). */
+  desc: string;
   status: Status;
 }
 

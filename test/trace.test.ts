@@ -7,7 +7,7 @@ import {
 } from '../src/core/trace';
 
 const el = (over: Partial<Element> = {}): Element => ({
-  id: 'pump-driver', kind: 'component', name: 'PumpDriver', alias: 'PumpDriver', req: ['R2'], status: 'approved', ...over,
+  id: 'pump-driver', kind: 'component', name: 'PumpDriver', alias: 'PumpDriver', req: ['R2'], desc: '', status: 'approved', ...over,
 });
 
 describe('hashElement', () => {
@@ -34,6 +34,10 @@ describe('hashElement', () => {
 
   it('does not change with status (proposed vs approved vs modified is not content)', () => {
     expect(hashElement(el({ status: 'proposed' }))).toBe(hashElement(el({ status: 'modified' })));
+  });
+
+  it('does not change with the description: commentary, not something code is generated from', () => {
+    expect(hashElement(el({ desc: 'a note to the reviewer' }))).toBe(hashElement(el({ desc: '' })));
   });
 });
 
@@ -122,14 +126,18 @@ const word = fc.stringMatching(/^[A-Za-z][A-Za-z0-9]{0,10}$/);
 const req = fc.array(fc.stringMatching(/^R[1-9][0-9]?$/), { maxLength: 4 });
 const arbElement: fc.Arbitrary<Element> = fc.record({
   id: word, kind: fc.constantFrom('component', 'interface'), name: word, alias: word, req,
+  desc: fc.oneof(fc.constant(''), word),
   status: fc.constantFrom('proposed', 'approved', 'modified'),
 });
 
 describe('round trip (property, trace)', () => {
-  it('hashElement is unaffected by id, alias or status alone', () => {
-    fc.assert(fc.property(arbElement, word, word, fc.constantFrom('proposed', 'approved', 'modified'), (e, id2, alias2, status2) => {
-      expect(hashElement({ ...e, id: id2, alias: alias2, status: status2 })).toBe(hashElement(e));
-    }), { numRuns: 200 });
+  it('hashElement is unaffected by id, alias, status or description alone', () => {
+    fc.assert(fc.property(
+      arbElement, word, word, fc.constantFrom('proposed', 'approved', 'modified'), word,
+      (e, id2, alias2, status2, desc2) => {
+        expect(hashElement({ ...e, id: id2, alias: alias2, status: status2, desc: desc2 })).toBe(hashElement(e));
+      },
+    ), { numRuns: 200 });
   });
 
   it('printTrace(parseTrace(printTrace(t))) is stable for any trace built from upsertRow', () => {
