@@ -413,3 +413,34 @@ architecture), not by reasoning about it:
    everywhere via one shared predicate, `isApprovedArchitectureFile` in `src/core/trace.ts`,
    because five separate readers glob that folder (dev API, MCP server, both mcp/ scripts,
    the review page) and they must agree exactly. Covered by tests.
+
+## Two ways in, and what each needed (2026-11-14)
+**Scenario A — copy/rename Doppel's folder and build your system in it.** Works, but
+tested raw it starts you in a bad state: `architecture/plant-watering.puml` becomes YOUR
+approved architecture (steering feeds it to Kiro as settled design), `trace.json` claims
+five elements you never wrote, `src/` mixes Doppel's own implementation with demo
+elements, and `check-drift` cheerfully reports "no drift" about all of it — true, and
+completely misleading. `doppel init --clean` removes exactly that demo content, by an
+explicit path list, never a glob. It refuses to run on Doppel's own checkout, which exists
+to show the demo.
+
+**Scenario B — drop Doppel into an existing project.** `doppel init` scaffolds it. This is
+the one that needed care, because such a project very likely ALREADY uses Kiro:
+- `.kiro/settings/mcp.json` is **merged**, not skipped. Every other file here is skipped if
+  present, which is safe — but skipping mcp.json would leave `doppel-drift` unregistered
+  while printing a reassuring "left untouched", and the user would get no MCP tool with no
+  idea why. The merge touches only our own key; other servers (context7, postgres, whatever)
+  are preserved exactly.
+- An **unparseable** mcp.json is left byte-for-byte alone and reported under "NEEDS YOUR
+  ATTENTION" with the exact JSON to paste. Destroying someone's whole MCP config because it
+  had a trailing comma would be far worse than not registering ourselves.
+- Existing steering and hooks are never overwritten, so customised rules survive.
+- Re-running changes nothing (idempotent), so it is safe to run again after moving Doppel.
+
+Covered by `test/init.test.ts`: merge preserves other servers, steering is not overwritten,
+a second run is a no-op, a malformed config is preserved, and `--clean` removes only listed
+demo files while leaving the user's own code and architecture alone.
+
+Still true and worth knowing: generated code goes to `src/<element-id>.ts`, which in
+Scenario A sits in the same `src/` as Doppel's own implementation. Functional but untidy; a
+configurable code directory is the real fix and is not built.

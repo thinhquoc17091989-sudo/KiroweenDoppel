@@ -12,6 +12,10 @@
  *   doppel          serve the review page for this project
  *   doppel init     scaffold this project so Kiro knows about Doppel here (steering, hook,
  *                   MCP registration). Run this once in a new project before serving.
+ *   doppel init --clean
+ *                   same, but first removes Doppel's own demo content (plant-watering).
+ *                   For when you have copied/renamed Doppel's folder to start your own
+ *                   project in it, and do not want its sample as your architecture.
  *
  * Flags:
  *   --port <n>   port to listen on (default 5173, falls forward if taken)
@@ -38,7 +42,13 @@ const port = Number(arg('--port', '5173'));
 const open = !process.argv.includes('--no-open');
 
 if (process.argv[2] === 'init') {
-  reportInit(runInit(projectRoot, PACKAGE_DIR));
+  const clean = process.argv.includes('--clean');
+  if (clean && projectRoot === PACKAGE_DIR) {
+    console.log("Refusing --clean on Doppel's own checkout: that would delete the demo this");
+    console.log('repository exists to show. Copy or rename the folder first, then clean there.');
+    process.exit(1);
+  }
+  reportInit(runInit(projectRoot, PACKAGE_DIR, { clean }));
   process.exit(0);
 }
 

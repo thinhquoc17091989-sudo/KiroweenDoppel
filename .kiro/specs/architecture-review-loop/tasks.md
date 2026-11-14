@@ -41,6 +41,7 @@
 - [x] 23. (C) Stop hardcoding the plant-watering sample: main.ts fetches /api/state for the HOST project's proposals, falling back to the bundled sample only when no server is present (static hosting), and says which it is reading. Proposals are searched for at proposals.puml / doppel/proposals.puml / samples/... -- never architecture/proposals.puml, which would feed unapproved proposals to Kiro as approved truth
 - [x] 24. (C) `doppel init` (bin/init.mjs): scaffolds a HOST project -- architecture/, a starter proposals.puml, always-on steering, both hooks, and .kiro/settings/mcp.json, every generated path resolved to wherever Doppel actually lives. Never overwrites. Verified in a clean project: paths resolve, the drift script runs, and the MCP server reports on THAT project's architecture
 - [ ] 25. (K) AI-driven bootstrap: Kiro proposes an initial architecture from an existing codebase via propose-mcp (brownfield path)
+- [ ] 29. (C) Configurable code directory: generated src/<id>.ts collides with Doppel's own src/ when Doppel's folder is reused as the project (scenario A). Functional but untidy.
 
 ## Compare and auto-detect (added 2026-11-13, product UI this time, not the dev console)
 - [x] 25b. (C) "Compare with approved" toggle in the real review page: cached directory handle, loads and merges architecture/*.puml, renders beside the proposal using the same render.ts/layout.ts

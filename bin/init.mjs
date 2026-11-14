@@ -12,8 +12,49 @@
  * Never overwrites. Existing files are reported and left alone, so re-running is safe and a
  * project that has customised its steering does not silently lose it.
  */
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+
+/**
+ * Doppel's own demo content, by exact path. Only ever removed by an explicit `--clean`,
+ * and only these paths — never a glob, never a directory sweep, because this deletes files
+ * in someone's project. Everything here is demo material shipped with Doppel; none of it is
+ * Doppel's implementation (src/core, src/ui, src/main.ts, mcp/, dev/, bin/ all stay).
+ *
+ * This matters for the "rename Doppel's folder and build in it" route: without clearing
+ * these, plant-watering becomes YOUR approved architecture, trace.json claims five elements
+ * you never wrote, and the drift checker cheerfully reports no drift about all of it.
+ */
+const DEMO_CONTENT = [
+  'architecture/plant-watering.puml',
+  'architecture/layout.json',
+  'trace.json',
+  'src/moisture-sensor.ts',
+  'src/moisture-reading.ts',
+  'src/pump-driver.ts',
+  'src/scheduler.ts',
+  'src/watering-controller.ts',
+  'test/moisture-sensor.test.ts',
+  'test/pump-driver.test.ts',
+  'test/scheduler.test.ts',
+  'test/watering-controller.test.ts',
+  'test/samples.test.ts',
+  'samples/plant-watering/proposals.puml',
+  'samples/plant-watering/watering-controller.state.puml',
+  'samples/plant-watering/skip-watering-decision.activity.puml',
+  'samples/plant-watering/skip-watering-on-rain.seq.puml',
+];
+
+export function cleanDemoContent(projectRoot) {
+  const removed = [];
+  for (const rel of DEMO_CONTENT) {
+    const abs = join(projectRoot, rel);
+    if (!existsSync(abs)) continue;
+    rmSync(abs, { force: true });
+    removed.push(rel);
+  }
+  return removed;
+}
 
 /** Path to a Doppel script as the HOST project should refer to it. */
 function scriptPath(projectRoot, packageDir, rel) {
@@ -64,9 +105,14 @@ ExampleService ..> ExampleStore : reads and writes
 @enduml
 `;
 
-export function runInit(projectRoot, packageDir) {
+export function runInit(projectRoot, packageDir, { clean = false } = {}) {
   const created = [];
   const skipped = [];
+  const merged = [];
+  const failed = [];
+  // Clear first, so the starter proposals.puml and architecture/ below are written into a
+  // project with no leftover demo content rather than alongside it.
+  const removed = clean ? cleanDemoContent(projectRoot) : [];
 
   const write = (relPath, contents) => {
     const abs = join(projectRoot, relPath);
@@ -119,29 +165,76 @@ export function runInit(projectRoot, packageDir) {
     }],
   }, null, 2) + '\n');
 
-  write('.kiro/settings/mcp.json', JSON.stringify({
-    mcpServers: {
-      'doppel-drift': {
-        command: 'node',
-        args: [serverJs],
-        disabled: false,
-        autoApprove: ['check_drift', 'list_trace'],
-      },
-    },
-  }, null, 2) + '\n');
+  // mcp.json is MERGED, not skipped. A project already using Kiro almost certainly has
+  // other servers registered here; skipping it (as every other file here is skipped) would
+  // silently leave doppel-drift unregistered, and the user would get no MCP tool with
+  // nothing but a "left untouched" line to explain why. Merging touches only our own key.
+  const mcpRel = '.kiro/settings/mcp.json';
+  const mcpAbs = join(projectRoot, mcpRel);
+  const ourServer = {
+    command: 'node',
+    args: [serverJs],
+    disabled: false,
+    autoApprove: ['check_drift', 'list_trace'],
+  };
 
-  return { created, skipped, projectRoot };
+  if (!existsSync(mcpAbs)) {
+    mkdirSync(dirname(mcpAbs), { recursive: true });
+    writeFileSync(mcpAbs, JSON.stringify({ mcpServers: { 'doppel-drift': ourServer } }, null, 2) + '\n');
+    created.push(mcpRel);
+  } else {
+    let existing;
+    try {
+      existing = JSON.parse(readFileSync(mcpAbs, 'utf8'));
+    } catch {
+      // Malformed JSON: leave it completely alone. Overwriting someone's whole MCP config
+      // because it had a trailing comma would be far worse than not registering ourselves.
+      failed.push(`${mcpRel} — could not be parsed as JSON, so it was left untouched. Add this to "mcpServers" by hand:\n      "doppel-drift": ${JSON.stringify(ourServer)}`);
+      return { created, skipped, removed, merged, failed, projectRoot };
+    }
+    const servers = existing.mcpServers ?? (existing.mcpServers = {});
+    const had = Object.prototype.hasOwnProperty.call(servers, 'doppel-drift');
+    const unchanged = had && JSON.stringify(servers['doppel-drift']) === JSON.stringify(ourServer);
+    if (unchanged) {
+      skipped.push(`${mcpRel} (doppel-drift already registered)`);
+    } else {
+      servers['doppel-drift'] = ourServer;
+      writeFileSync(mcpAbs, JSON.stringify(existing, null, 2) + '\n');
+      const others = Object.keys(servers).filter((k) => k !== 'doppel-drift');
+      merged.push(
+        `${mcpRel} — ${had ? 'updated' : 'added'} "doppel-drift"` +
+        (others.length ? `, left ${others.length} other server(s) untouched: ${others.join(', ')}` : ''),
+      );
+    }
+  }
+
+  return { created, skipped, removed, merged, failed, projectRoot };
 }
 
-export function reportInit({ created, skipped, projectRoot }) {
+export function reportInit({ created, skipped, removed = [], merged = [], failed = [], projectRoot }) {
   console.log(`Doppel init — ${projectRoot}\n`);
+  // Deletions are reported first and in full: a command that removes files from someone's
+  // project must never be quiet about which ones.
+  if (removed.length) {
+    console.log("  removed Doppel's demo content:");
+    for (const f of removed) console.log(`    - ${f}`);
+    console.log('');
+  }
   if (created.length) {
     console.log('  created:');
     for (const f of created) console.log(`    + ${f}`);
   }
+  if (merged.length) {
+    console.log('  merged into existing config:');
+    for (const f of merged) console.log(`    ~ ${f}`);
+  }
   if (skipped.length) {
     console.log('  already there, left untouched:');
     for (const f of skipped) console.log(`    · ${f}`);
+  }
+  if (failed.length) {
+    console.log('\n  NEEDS YOUR ATTENTION:');
+    for (const f of failed) console.log(`    ! ${f}`);
   }
   console.log('\n  Next:');
   console.log('    1. Edit proposals.puml, or ask Kiro to propose an architecture for this project.');
