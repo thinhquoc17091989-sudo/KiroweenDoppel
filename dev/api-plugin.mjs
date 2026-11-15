@@ -17,13 +17,13 @@
  *                            content comparison replaced it).
  */
 import { execFile, spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, watch, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { recordGeneration } from '../mcp/update-trace.mjs';
 import { readArchitectureFiles } from '../mcp/arch-files.mjs';
-import { normaliseTarget } from '../src/core/paths.ts';
-import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { layoutPathFor, normaliseTarget } from '../dist-node/core/paths.js';
+import { parse as parsePuml } from '../dist-node/core/puml.js';
+import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../dist-node/core/trace.js';
 
 const MODELS = ['claude-haiku-5.5', 'claude-sonnet-5.5', 'claude-opus-5.5', 'auto'];
 const KIRO_EXE = join(process.env.LOCALAPPDATA ?? '', 'kiro-cli', 'kiro-cli.exe');
@@ -50,6 +50,9 @@ const PROPOSALS_BASENAME = 'proposals.puml';
 export function doppelDevApi(root, { autoOpen = true } = {}) {
   const archDir = join(root, 'architecture');
   const tracePath = join(root, 'trace.json');
+  // Hand-placed positions live here, committed with the repo so the whole team opens a
+  // diagram arranged the same way. Never under architecture/, which steering feeds to Kiro.
+  const layoutDir = join(root, '.doppel', 'layout');
 
   function loadArchitecture() {
     const files = readArchitectureFiles(archDir);
@@ -69,12 +72,27 @@ export function doppelDevApi(root, { autoOpen = true } = {}) {
     try { return parseTrace(readFileSync(tracePath, 'utf8')); } catch { return emptyTrace(); }
   }
 
+  /** Every stored layout, keyed by the diagram path it belongs to. */
+  function loadLayouts(dir = layoutDir, prefix = '') {
+    if (!existsSync(dir)) return {};
+    const out = {};
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) Object.assign(out, loadLayouts(join(dir, entry.name), rel));
+      else if (entry.name.endsWith('.json')) {
+        try { out[rel.replace(/\.json$/, '.puml')] = JSON.parse(readFileSync(join(dir, entry.name), 'utf8')); }
+        catch { /* a corrupt layout reads as "never arranged", not a crash */ }
+      }
+    }
+    return out;
+  }
+
   function currentState() {
     const { files, elements } = loadArchitecture();
     const trace = loadTrace();
     const entries = computeStatus(elements, trace);
     const orphans = orphanRows(elements, trace);
-    return { architectureFiles: files, proposalsFile: loadProposals(), entries, orphans, elementCount: elements.length };
+    return { architectureFiles: files, proposalsFile: loadProposals(), entries, orphans, elementCount: elements.length, layouts: loadLayouts() };
   }
 
   function codeFileContents(elements) {
@@ -231,6 +249,19 @@ export function doppelDevApi(root, { autoOpen = true } = {}) {
             mkdirSync(dirname(abs), { recursive: true });
             writeFileSync(abs, text, 'utf8');
             sendJson(res, 200, { ok: true, path: `architecture/${target}` });
+            return;
+          }
+          if (req.url === '/api/layout' && req.method === 'POST') {
+            const body = JSON.parse((await readBody(req)) || '{}');
+            const rel = layoutPathFor(String(body.path ?? ''));
+            if (!rel) { sendJson(res, 400, { ok: false, error: 'path must be a .puml diagram inside the project' }); return; }
+            const abs = join(layoutDir, ...rel.split('/'));
+            mkdirSync(dirname(abs), { recursive: true });
+            // Sorted keys keep the diff small when two people arrange different boxes.
+            const layout = body.layout && typeof body.layout === 'object' ? body.layout : {};
+            const sorted = Object.fromEntries(Object.keys(layout).sort().map((k) => [k, layout[k]]));
+            writeFileSync(abs, `${JSON.stringify(sorted, null, 2)}\n`, 'utf8');
+            sendJson(res, 200, { ok: true, path: `.doppel/layout/${rel}` });
             return;
           }
           if (req.url === '/api/run' && req.method === 'POST') {

@@ -22,12 +22,15 @@
  * trace.json is treated as "no trace yet", not an error.
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { join, resolve } from 'node:path';
+import { parse as parsePuml } from '../dist-node/core/puml.js';
+import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../dist-node/core/trace.js';
 import { readArchitectureFiles } from './arch-files.mjs';
 
-const root = process.cwd();
+// Which project to check. Doppel's own repo is the tool, not a project with architecture
+// in it, so the demo under example/ is checked by pointing this at its folder.
+const rootArg = process.argv.indexOf('--root');
+const root = rootArg >= 0 && process.argv[rootArg + 1] ? resolve(process.argv[rootArg + 1]) : process.cwd();
 const archDir = join(root, 'architecture');
 const tracePath = join(root, 'trace.json');
 const brief = process.argv.includes('--brief');

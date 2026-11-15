@@ -68,3 +68,22 @@ export function slug(title: string): string {
 /** Where approving a proposals file writes by default: flat, beside the other diagrams.
  *  A folder is only ever created because a reviewer asked for one by editing the path. */
 export const defaultTarget = (title: string): string => `${slug(title)}.puml`;
+
+/**
+ * Where a diagram's hand-placed positions live, as a path under `.doppel/layout/`.
+ *
+ * Deliberately NOT inside `architecture/`: steering feeds that whole folder to Kiro as
+ * approved design, and a blob of pixel coordinates is not design. `.doppel/` is committed
+ * with the repo instead, so a teammate who pulls the project opens every diagram arranged
+ * the way it was left rather than re-arranged from scratch in their own browser.
+ */
+export function layoutPathFor(diagramPath: string): string | null {
+  const cleaned = diagramPath.trim().replace(/\\/g, '/').replace(/^\/+/, '').replace(/^\.\//, '');
+  const segments = cleaned.split('/').filter((s) => s.length && s !== '.');
+  if (!segments.length || segments.some((s) => s === '..')) return null;
+
+  const base = segments[segments.length - 1]!;
+  if (!/\.puml$/i.test(base)) return null;
+  segments[segments.length - 1] = base.replace(/\.puml$/i, '.json');
+  return segments.join('/');
+}

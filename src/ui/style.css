@@ -213,6 +213,10 @@ aside { background: var(--chrome-2); border-left: 1px solid var(--line); overflo
 
 /* SVG */
 .node { cursor: grab; }
+/* An approved file can be selected but not rearranged, so it must not offer the grab
+   cursor of a draggable block. The compare pane answers nothing at all. */
+#canvas.readonly .node { cursor: pointer; }
+#canvasApproved .node { cursor: default; }
 .node.dragging { cursor: grabbing; }
 .node rect.body { fill: #fff; stroke-width: 2; }
 .node.proposed rect.body { stroke: var(--proposed); stroke-dasharray: 7 5; fill: #faf7ff; }

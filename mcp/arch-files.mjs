@@ -10,7 +10,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { isApprovedArchitectureFile } from '../src/core/trace.ts';
+import { isApprovedArchitectureFile } from '../dist-node/core/trace.js';
 
 /** Every approved .puml under `dir`, at any depth, as sorted paths relative to it. */
 export function listArchitectureFiles(dir, prefix = '') {

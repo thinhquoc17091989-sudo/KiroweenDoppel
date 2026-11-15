@@ -63,7 +63,7 @@
             <span><i class="sw dashed"></i>proposed</span>
             <span><i class="sw solid"></i>approved</span>
             <span><i class="sw iface"></i>interface</span>
-            <span class="hint">drag to place · double-click to rename</span>
+            <span class="hint" id="canvasHint"></span>
           </div>
           <div class="paneEmpty" id="canvasEmpty" hidden></div>
         </div>
@@ -84,7 +84,7 @@
 
     <aside>
       <div id="readonlyNote" hidden>
-        This file is approved architecture, shown read&#8209;only. Open the proposals file to accept or reject changes.
+        This file is approved architecture, shown read&#8209;only. Click a block to inspect it. To change it, edit the proposals file and approve.
       </div>
       <div class="panelTabs">
         <button id="tabInspector" class="ptab on" type="button">Inspector</button>

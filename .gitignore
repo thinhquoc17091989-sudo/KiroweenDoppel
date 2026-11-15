@@ -4,3 +4,6 @@ dist/
 .DS_Store
 # never ignore .kiro: the hackathon requires it in the repo
 .github/.pmind/
+
+dist-node/
+*.tgz

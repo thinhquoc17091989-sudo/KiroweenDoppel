@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { archPath, defaultTarget, normaliseTarget, slug } from '../src/core/paths';
+import { archPath, defaultTarget, layoutPathFor, normaliseTarget, slug } from '../src/core/paths';
 
 describe('archPath', () => {
   it('reads the feature from the folder and the dialect from the suffix', () => {
@@ -76,5 +76,26 @@ describe('slug and defaultTarget', () => {
   it('defaults to a flat file, so approving never invents a folder on its own', () => {
     expect(defaultTarget('Irrigation')).toBe('irrigation.puml');
     expect(normaliseTarget(defaultTarget('Irrigation'))).toBe('irrigation.puml');
+  });
+});
+
+describe('layoutPathFor', () => {
+  it('mirrors the diagram path under .doppel/layout, as json', () => {
+    expect(layoutPathFor('architecture/plant-watering.puml')).toBe('architecture/plant-watering.json');
+    expect(layoutPathFor('architecture/irrigation/watering-cycle.seq.puml')).toBe('architecture/irrigation/watering-cycle.seq.json');
+    expect(layoutPathFor('proposals.puml')).toBe('proposals.json');
+  });
+
+  it('gives a proposal and the file it is approved into DIFFERENT keys', () => {
+    // The bug this exists to prevent is the opposite one: they must not collide, but the
+    // approve step has to copy one to the other deliberately, not rely on a shared key.
+    expect(layoutPathFor('proposals.puml')).not.toBe(layoutPathFor('architecture/plant-watering.puml'));
+  });
+
+  it('refuses anything that is not a diagram, or that climbs out', () => {
+    expect(layoutPathFor('../escape.puml')).toBeNull();
+    expect(layoutPathFor('architecture/../../escape.puml')).toBeNull();
+    expect(layoutPathFor('notes.md')).toBeNull();
+    expect(layoutPathFor('')).toBeNull();
   });
 });

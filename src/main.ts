@@ -11,7 +11,10 @@ import type { RouteStyle } from './core/route.ts';
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
 const svg = $('#canvas') as unknown as SVGSVGElement;
 const svgApproved = $('#canvasApproved') as unknown as SVGSVGElement;
-const noHandlers = { onSelect() {}, onRename() {}, onDragStart() {} };
+/** For the compare pane only: it is a reference picture of the previous approved
+ *  architecture, so nothing in it responds — selecting there would point the inspector at
+ *  an element from a file the reviewer is not working on. */
+const inertHandlers = { onSelect() {}, onRename() {}, onDragStart() {} };
 
 /**
  * One file the reviewer can open. The proposals file is the only editable one — accept,
@@ -69,24 +72,65 @@ function asProposals(m: Model): Model {
 }
 
 /**
- * Layout is DERIVED from the .puml, not stored with it. `arrangeAll` lays a diagram out
- * from its own elements and links, so a file that nobody has dragged needs no layout data
- * at all — open it anywhere and it looks the same.
+ * Layout is DERIVED from the .puml wherever it can be. `arrangeAll` lays a diagram out from
+ * its own elements and links, so a file nobody has dragged needs no layout data at all.
  *
- * Only once a reviewer moves something by hand is there anything worth keeping, and that
- * is kept in browser storage under a key, never written into `architecture/`. Writing a
- * layout file next to the architecture would clutter the file tree with something that is
- * not architecture, and worse, `.kiro/steering/architecture.md` pulls that whole folder in
- * for Kiro — so every approve would feed the agent a blob of pixel coordinates as if it
- * were design.
+ * Once a reviewer moves something by hand, that arrangement is worth keeping and worth
+ * sharing: it goes to `.doppel/layout/<diagram>.json` in the project, committed with the
+ * repo, so a teammate who pulls it opens the diagram as it was left instead of re-arranged
+ * in their own browser. Browser storage remains as a fallback for static hosting, where
+ * there is no server to write through.
+ *
+ * It stays out of `architecture/` deliberately: `.kiro/steering/architecture.md` feeds that
+ * whole folder to Kiro as approved design, and a blob of pixel coordinates is not design.
  */
 const lsKey = (fileName: string) => `doppel.layout.${fileName}`;
+
+/** Layouts the project server supplied for this session, keyed by diagram path. */
+let projectLayouts: Record<string, Layout> = {};
+
 function savedLayout(fileName: string): Layout {
+  const fromProject = projectLayouts[fileName];
+  if (fromProject && Object.keys(fromProject).length) return fromProject;
   try { return JSON.parse(localStorage.getItem(lsKey(fileName)) ?? '{}') as Layout; } catch { return {}; }
 }
+
+/** Writes trail the dragging rather than racing it: one save after the moving stops. */
+const layoutSaveTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+const postLayout = (fileName: string, layout: Layout) =>
+  fetch('/api/layout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: fileName, layout }),
+  }).catch(() => undefined); // no server: the browser copy is all there is
+
+function rememberLayout(fileName: string, layout: Layout) {
+  projectLayouts[fileName] = layout;
+  try { localStorage.setItem(lsKey(fileName), JSON.stringify(layout)); } catch { /* private window: fine */ }
+}
+
+function saveLayoutFor(fileName: string, layout: Layout) {
+  rememberLayout(fileName, layout);
+  clearTimeout(layoutSaveTimers.get(fileName));
+  layoutSaveTimers.set(fileName, setTimeout(() => {
+    layoutSaveTimers.delete(fileName);
+    void postLayout(fileName, layout);
+  }, 400));
+}
+
+/** Saves now and waits for it to land. Anything about to re-read the project has to use
+ *  this: a debounced write still in flight would be overwritten by the stale reload. */
+async function flushLayout(fileName: string, layout: Layout) {
+  clearTimeout(layoutSaveTimers.get(fileName));
+  layoutSaveTimers.delete(fileName);
+  rememberLayout(fileName, layout);
+  await postLayout(fileName, layout);
+}
+
 function persistLayout(f: OpenFile) {
   if (!f.layoutDirty) return; // untouched: derivable from the .puml, nothing to store
-  try { localStorage.setItem(lsKey(f.name), JSON.stringify(f.layout)); } catch { /* private window: fine */ }
+  saveLayoutFor(f.name, f.layout);
 }
 
 /** A hand-picked write target, remembered per proposals file so it survives a reload. */
@@ -159,8 +203,11 @@ async function loadProject(): Promise<{ files: OpenFile[]; source: string; drift
         proposalsFile?: { name: string; text: string } | null;
         architectureFiles?: { name: string; text: string }[];
         entries?: { id: string; state: 'in-sync' | 'stale' | 'no-code' }[];
+        layouts?: Record<string, Layout>;
       };
       if (data.ok) {
+        // Must land before toFile runs: that is where a file picks up its arrangement.
+        projectLayouts = data.layouts ?? {};
         const files: OpenFile[] = [];
         if (data.proposalsFile) files.push(toFile(data.proposalsFile.name, data.proposalsFile.text, 'proposals'));
         for (const a of data.architectureFiles ?? []) {
@@ -176,6 +223,7 @@ async function loadProject(): Promise<{ files: OpenFile[]; source: string; drift
   } catch {
     // no local server: static hosting, fall through to the bundled sample
   }
+  projectLayouts = {};
   return {
     files: [toFile('samples/plant-watering/proposals.puml', bundledSampleText, 'proposals')],
     source: 'bundled sample (no project server)',
@@ -279,7 +327,26 @@ function ghostRow(target: string): HTMLDivElement {
   return g;
 }
 
+/**
+ * Everything the tree draws from, as one short string. draw() runs on every selection,
+ * drag and filter keystroke, and the tree is identical across almost all of them — so it
+ * is rebuilt only when one of these actually changes.
+ */
+function treeSignature(): string {
+  const files = state.files.map((f) => {
+    const pending = f.kind === 'proposals' ? f.model.elements.filter((e) => e.status !== 'approved').length : 0;
+    return `${f.name}|${f.kind}|${f.label}|${f.feature}|${f.dialect}|${pending}|${isStale(f) ? 1 : 0}`;
+  });
+  return [state.activeName, state.groupMode, state.target, [...state.collapsed].sort().join(','), ...files].join('\n');
+}
+
+let lastTreeSig: string | null = null;
+
 function drawTree() {
+  const sig = treeSignature();
+  if (sig === lastTreeSig) return;
+  lastTreeSig = sig;
+
   const body = $('#treeBody');
   body.replaceChildren();
 
@@ -404,7 +471,17 @@ function editTarget() {
   toast(`approve will write architecture/${next}`);
 }
 
+let lastDetailSig: string | null = null;
+let lastTabsSig: string | null = null;
+
 function drawTabs() {
+  const sig = [state.activeName, ...state.openTabs.map((n) => {
+    const f = state.files.find((x) => x.name === n);
+    return `${n}|${f?.kind ?? ''}|${f?.label ?? ''}`;
+  })].join('\n');
+  if (sig === lastTabsSig) return;
+  lastTabsSig = sig;
+
   const bar = $('#tabbar');
   bar.replaceChildren();
   for (const name of state.openTabs) {
@@ -634,14 +711,24 @@ function draw() {
     empty.hidden = false;
   } else {
     empty.hidden = true;
+    // Selecting is reading, not editing, so a block answers a click in an approved file
+    // exactly as it does in a proposal — the same click already worked from the list on
+    // the right, and the canvas disagreeing with it was the inconsistency. What stays shut
+    // on an approved file is changing it: renaming and dragging would edit architecture
+    // that is only supposed to change by going through a review.
+    svg.classList.toggle('readonly', !f.editable);
     render(svg, m, f.layout, state.selected,
       f.editable
         ? { onSelect, onRename: doRename, onDragStart, onNoteDragStart }
-        : noHandlers,
+        : { onSelect, onRename() {}, onDragStart() {} },
       state.routeStyle);
   }
 
   $('#readonlyNote').hidden = !f || f.editable;
+  // The hint has to describe the file actually open, or it offers gestures that do nothing.
+  $('#canvasHint').textContent = !f ? ''
+    : f.editable ? 'drag to place · double-click to rename'
+    : 'click a block to inspect · read-only';
 
   $('#tabInspector').classList.toggle('on', state.rightTab === 'inspector');
   $('#tabPuml').classList.toggle('on', state.rightTab === 'puml');
@@ -653,9 +740,28 @@ function draw() {
   $('#filterBar').hidden = state.rightTab !== 'inspector' || !!selectedEl;
   $('#elementList').hidden = !!selectedEl;
   $('#elementDetail').hidden = !selectedEl;
-  if (selectedEl) $('#elementDetail').replaceChildren(renderDetail(selectedEl, m, !!f?.editable));
-  else drawList();
-  $('#puml').textContent = f ? print(m) : '';
+  if (selectedEl) {
+    // Rebuilding this panel throws away the description box the reviewer may be typing in,
+    // and makes the text visibly re-appear, so it happens only when something in it differs.
+    const sig = JSON.stringify([
+      selectedEl.id, selectedEl.name, selectedEl.kind, selectedEl.status, selectedEl.req, selectedEl.desc, !!f?.editable,
+      // The name at the other end is shown too, so renaming a neighbour has to refresh this.
+      m.links.filter((l) => l.from === selectedEl.id || l.to === selectedEl.id).map((l) => {
+        const otherId = l.from === selectedEl.id ? l.to : l.from;
+        return [l.from, l.to, l.label, m.elements.find((e) => e.id === otherId)?.name ?? ''];
+      }),
+    ]);
+    if (sig !== lastDetailSig) {
+      lastDetailSig = sig;
+      $('#elementDetail').replaceChildren(renderDetail(selectedEl, m, !!f?.editable));
+    }
+  } else {
+    lastDetailSig = null;
+    drawList();
+  }
+  // Serialising the whole model is wasted on a tab nobody is looking at. Switching to the
+  // PlantUML tab redraws, so it is always filled by the time it becomes visible.
+  if (state.rightTab === 'puml') $('#puml').textContent = f ? print(m) : '';
   $('#source').textContent = state.source;
 
   const pending = m.elements.filter((e) => e.status !== 'approved').length;
@@ -689,17 +795,35 @@ function doRename(id: string) {
 
 // ---------------------------------------------------------------- drag
 
+/**
+ * How far the pointer must travel before a press counts as a drag rather than a click.
+ *
+ * Without this every click on a block ran the whole release path: it marked the file as
+ * hand-arranged although nothing had moved, wrote the layout to storage, queued a save to
+ * the project, and fired a second redraw that rebuilt the description panel the click had
+ * just put on screen. Selecting something should cost none of that.
+ */
+const DRAG_SLOP = 3;
+
 function onDragStart(id: string, ev: PointerEvent) {
   const f = active();
   if (!f?.editable) return;
-  ev.preventDefault();
   const start = f.layout[id];
   if (!start) return;
+  ev.preventDefault();
+
   const g = ev.currentTarget as SVGGElement;
-  g.classList.add('dragging');
   const pt0 = clientToSvg(ev.clientX, ev.clientY);
   const origin = { ...start };
+  const from = { x: ev.clientX, y: ev.clientY };
+  let dragging = false;
+
   const move = (e: PointerEvent) => {
+    if (!dragging) {
+      if (Math.abs(e.clientX - from.x) < DRAG_SLOP && Math.abs(e.clientY - from.y) < DRAG_SLOP) return;
+      dragging = true;
+      g.classList.add('dragging');
+    }
     const pt = clientToSvg(e.clientX, e.clientY);
     f.layout[id] = {
       x: Math.round((origin.x + pt.x - pt0.x) / 8) * 8,
@@ -711,6 +835,8 @@ function onDragStart(id: string, ev: PointerEvent) {
   const up = () => {
     window.removeEventListener('pointermove', move);
     window.removeEventListener('pointerup', up);
+    if (!dragging) return; // a click: it selected the block, and that is all it did
+    g.classList.remove('dragging');
     f.layoutDirty = true; // only now is there a position worth remembering
     persistLayout(f);
     draw();
@@ -734,8 +860,14 @@ function onNoteDragStart(key: string, ev: PointerEvent) {
   const startX = f.layout[key]?.x ?? Number(rect?.getAttribute('x') ?? 0);
   const startY = f.layout[key]?.y ?? Number(rect?.getAttribute('y') ?? 0);
   const pt0 = clientToSvg(ev.clientX, ev.clientY);
+  const from = { x: ev.clientX, y: ev.clientY };
+  let dragging = false;
 
   const move = (e: PointerEvent) => {
+    if (!dragging) {
+      if (Math.abs(e.clientX - from.x) < DRAG_SLOP && Math.abs(e.clientY - from.y) < DRAG_SLOP) return;
+      dragging = true;
+    }
     const pt = clientToSvg(e.clientX, e.clientY);
     f.layout[key] = {
       x: Math.round((startX + pt.x - pt0.x) / 8) * 8,
@@ -747,6 +879,7 @@ function onNoteDragStart(key: string, ev: PointerEvent) {
   const up = () => {
     window.removeEventListener('pointermove', move);
     window.removeEventListener('pointerup', up);
+    if (!dragging) return; // pressing a note without moving it changes nothing
     f.layoutDirty = true;
     persistLayout(f);
     draw();
@@ -817,7 +950,7 @@ async function refreshCompare() {
     return;
   }
   empty.style.display = 'none';
-  render(svgApproved, approved, arrangeAll(approved), null, noHandlers, state.routeStyle);
+  render(svgApproved, approved, arrangeAll(approved), null, inertHandlers, state.routeStyle);
 }
 
 async function writeFile(dir: FileSystemDirectoryHandle, name: string, content: string) {
@@ -983,10 +1116,12 @@ $('#btnApprove').addEventListener('click', async () => {
   const segments = target.split('/');
   const fileName = segments[segments.length - 1]!;
 
-  // No layout file is written by any of the routes below. Positions are derived from the
-  // .puml by arrangeAll, and only a hand-moved diagram has anything worth keeping -- that
-  // stays in this browser rather than cluttering architecture/, which Kiro reads wholesale
-  // as approved design.
+  // The arrangement travels with the approval. Without this the approved file opens under
+  // a layout key of its own, finds nothing, and re-arranges itself from scratch -- so the
+  // diagram a reviewer carefully laid out comes back looking like a different drawing.
+  // Only a hand-arranged proposal has anything worth carrying; an untouched one is
+  // re-derivable by arrangeAll and is left to do exactly that.
+  if (f.layoutDirty) await flushLayout(`architecture/${target}`, f.layout);
 
   // The project server already holds the project root, so when it is there it writes
   // straight into the hierarchy -- no folder picker, no permission prompt, any browser.

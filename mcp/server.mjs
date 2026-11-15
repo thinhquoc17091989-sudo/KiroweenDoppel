@@ -22,8 +22,8 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { parse as parsePuml } from '../src/core/puml.ts';
-import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../src/core/trace.ts';
+import { parse as parsePuml } from '../dist-node/core/puml.js';
+import { computeStatus, emptyTrace, orphanRows, parseTrace } from '../dist-node/core/trace.js';
 import { readArchitectureFiles } from './arch-files.mjs';
 
 // The project root. Kiro launches the server with cwd set to the workspace; DOPPEL_ROOT

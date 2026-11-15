@@ -11,19 +11,36 @@
   "scripts": {
     "dev": "vite",
     "doppel": "node bin/doppel.mjs",
+    "build:node": "tsc -p tsconfig.node.json",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "npm run build:node",
+    "prepack": "npm run build:node"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "fast-check": "^4.10.2",
     "typescript": "^7.0.2",
-    "vite": "^8.3.7",
     "vitest": "^5.1.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.2"
-  }
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "vite": "^8.3.7",
+    "zod": "^4.6.7"
+  },
+  "engines": {
+    "node": ">=22.6"
+  },
+  "files": [
+    "bin/",
+    "dev/",
+    "mcp/",
+    "src/",
+    "dist-node/",
+    "samples/",
+    "index.html",
+    "README.md"
+  ]
 }

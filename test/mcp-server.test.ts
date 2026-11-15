@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 /**
@@ -12,11 +13,32 @@ import { join } from 'node:path';
 const ROOT = process.cwd();
 const CONFIG = join(ROOT, '.kiro', 'settings', 'mcp.json');
 
+/**
+ * The server answers about whatever project it is pointed at, and this repository is the
+ * tool rather than a project with architecture in it. So the test builds a throwaway
+ * project and points the server at it with DOPPEL_ROOT, which also makes these assertions
+ * exact instead of "whatever happens to be checked in today".
+ */
+let project: string;
+
+beforeAll(() => {
+  project = mkdtempSync(join(tmpdir(), 'doppel-mcp-'));
+  mkdirSync(join(project, 'architecture'), { recursive: true });
+  writeFileSync(join(project, 'architecture', 'demo.puml'),
+    ['@startuml demo', "' id: widget", "' req: R99", 'component "Widget" as Widget', '@enduml', ''].join('\n'), 'utf8');
+  writeFileSync(join(project, 'trace.json'), JSON.stringify({
+    widget: { id: 'widget', req: ['R99'], codePath: 'src/widget.ts', testPath: 'test/widget.test.ts', hash: 'deadbeef' },
+  }, null, 2), 'utf8');
+});
+
+afterAll(() => { rmSync(project, { recursive: true, force: true }); });
+
 interface RpcMessage { id?: number; result?: { tools?: { name: string }[]; content?: { type: string; text: string }[]; serverInfo?: { name: string } } }
 
 /** Minimal MCP client: initialize, then whatever calls the test asks for. */
 async function withServer<T>(fn: (rpc: (method: string, params: unknown) => Promise<RpcMessage>) => Promise<T>): Promise<T> {
-  const child = spawn(process.execPath, ['mcp/server.mjs'], { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, ['mcp/server.mjs'],
+    { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, DOPPEL_ROOT: project } });
   const pending = new Map<number, (m: RpcMessage) => void>();
   let buf = '';
   let nonProtocolStdout = '';
@@ -94,14 +116,14 @@ describe('MCP server over stdio', () => {
     expect(names).toContain('list_trace');
   });
 
-  it('check_drift returns readable text about the real architecture', async () => {
+  it('check_drift reports the drift in the project it was pointed at', async () => {
     const out = await withServer(async (rpc) => {
       const res = await rpc('tools/call', { name: 'check_drift', arguments: {} });
       return res.result?.content?.[0]?.text ?? '';
     });
-    // Either state is legitimate depending on the repo's current contents; what matters is
-    // that it answered in prose about elements rather than erroring.
+    // The fixture's trace hash is deliberately wrong for the element, so this is stale.
     expect(out).toMatch(/drift|element/i);
+    expect(out).toContain('widget');
   });
 
   it('list_trace filters by requirement', async () => {

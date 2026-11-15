@@ -73,7 +73,7 @@ inclusion: always
 The approved architecture for this project is in \`architecture/*.puml\`. Read it before you
 write or change any code.
 
-#[[file:architecture/*.puml]]
+#[[folder:architecture]]
 
 ## Rules
 

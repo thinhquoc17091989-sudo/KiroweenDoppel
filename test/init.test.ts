@@ -102,3 +102,22 @@ describe('cleanDemoContent', () => {
     expect(removed).toContain('src/moisture-sensor.ts');
   });
 });
+
+describe('the steering it installs is valid for Kiro', () => {
+  it('includes the architecture folder, never a file glob', () => {
+    // Kiro's #[[file:...]] include takes one path and does NOT expand globs: a project
+    // scaffolded with "#[[file:architecture/*.puml]]" shows "1 problem" against its
+    // steering and the agent is fed no architecture at all. Only #[[folder:...]] recurses.
+    // This repo's own steering was fixed once; the template that ships to every user was
+    // not, so the bug reappeared in each project doppel init touched.
+    const dir = mkdtempSync(join(tmpdir(), 'doppel-steering-'));
+    try {
+      runInit(dir, PACKAGE_DIR, {});
+      const steering = readFileSync(join(dir, '.kiro', 'steering', 'architecture.md'), 'utf8');
+      expect(steering).toContain('#[[folder:architecture]]');
+      expect(steering, 'a file include with a glob silently matches nothing').not.toMatch(/#\[\[file:[^\]]*\*/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

@@ -12,11 +12,11 @@
  * which is worse than no trace row at all.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { parse as parsePuml } from '../src/core/puml.ts';
+import { parse as parsePuml } from '../dist-node/core/puml.js';
 import { readArchitectureFiles } from './arch-files.mjs';
-import { emptyTrace, hashElement, parseTrace, pathsFor, printTrace, upsertRow } from '../src/core/trace.ts';
+import { emptyTrace, hashElement, parseTrace, pathsFor, printTrace, upsertRow } from '../dist-node/core/trace.js';
 
 /**
  * @param {string} elementId
@@ -46,12 +46,15 @@ export function recordGeneration(elementId, opts = {}) {
 // CLI entry point only when run directly, e.g. `node mcp/update-trace.mjs <id>` — importing
 // this file (dev-server.mjs does) must never also run this block.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const [, , elementId] = process.argv;
+  const args = process.argv.slice(2);
+  const rootArg = args.indexOf('--root');
+  const root = rootArg >= 0 && args[rootArg + 1] ? resolve(args[rootArg + 1]) : process.cwd();
+  const elementId = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--root');
   if (!elementId) {
-    console.error('Usage: node mcp/update-trace.mjs <element-id>');
+    console.error('Usage: node mcp/update-trace.mjs <element-id> [--root <project-dir>]');
     process.exitCode = 1;
   } else {
-    const result = recordGeneration(elementId);
+    const result = recordGeneration(elementId, { root });
     if (!result.ok) {
       console.error(result.error);
       process.exitCode = 1;

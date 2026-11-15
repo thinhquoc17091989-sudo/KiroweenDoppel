@@ -1,0 +1,23 @@
+// Compiles the pure core to plain JavaScript for the Node side of Doppel.
+//
+// bin/, dev/ and mcp/ are .mjs and used to import src/core/*.ts directly, relying on Node
+// stripping the types at runtime. That works from a source checkout and fails the moment
+// the package is installed: Node refuses to strip types for anything under node_modules,
+// so the installed CLI could not load its own parser. The browser side still consumes the
+// TypeScript through Vite; only Node needs this build.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist-node",
+    "rootDir": "src",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "rewriteRelativeImportExtensions": true,
+    "declaration": false,
+    "sourceMap": false,
+    "types": ["node"],
+    "lib": ["ES2022"]
+  },
+  "include": ["src/core"]
+}
